@@ -1,5 +1,5 @@
 {
-  "name": "@my-monorepo/worker",
+  "name": "@hairing/worker",
   "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
