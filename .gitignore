@@ -158,3 +158,4 @@ dist
 # typescript
 next-env.d.ts
 /.idea/
+/.turbo/

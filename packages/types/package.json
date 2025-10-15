@@ -3,5 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "main": "./index.ts",
-  "types": "./index.ts"
+  "types": "./index.ts",
+  "scripts": {
+    "build": "openapi-typescript ../../apps/api/dist/openapi.json --output ./index.ts",
+    "clean": "rm -f index.ts openapi.json"
+  },
+  "devDependencies": {
+    "api": "workspace:^",
+    "openapi-typescript": "^7.10.0"
+  }
 }
