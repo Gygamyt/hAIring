@@ -5,11 +5,9 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "scripts": {
-    "build": "openapi-typescript ../../apps/api/dist/openapi.json --output ./index.ts",
-    "clean": "rm -f index.ts openapi.json"
+    "clean": "rimraf index.ts openapi.json"
   },
   "devDependencies": {
-    "api": "workspace:^",
     "openapi-typescript": "^7.10.0"
   }
 }
