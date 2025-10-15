@@ -1,0 +1,14 @@
+{
+  "name": "@hairing/transcription",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "peerDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.0.0"
+  },
+  "dependencies": {
+    "assemblyai": "^4.17.0"
+  }
+}
