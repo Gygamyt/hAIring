@@ -1,0 +1,18 @@
+{
+  "name": "@hairing/ai-pipelines",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "peerDependencies": {
+    "@hairing/config-tsconfig": "workspace:^",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.0.0"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.78",
+    "@langchain/google-genai": "^0.2.18",
+    "@langchain/langgraph": "^0.4.9",
+    "langchain": "^0.3.36"
+  }
+}
