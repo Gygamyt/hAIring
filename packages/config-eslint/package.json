@@ -2,5 +2,9 @@
   "name": "@my-monorepo/config-eslint",
   "version": "1.0.0",
   "private": true,
-  "main": "index.js"
+  "main": "index.js",
+  "devDependencies": {
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5"
+  }
 }
