@@ -1,0 +1,15 @@
+{
+  "extends": "@hairing/config-tsconfig/nest.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "rootDirs": [
+      "./src",
+      "../../packages"
+    ],
+    "paths": {
+      "@hairing/types": ["../../packages/types/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

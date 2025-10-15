@@ -1,0 +1,5 @@
+{
+  "input": "./fastapi-spec.json",
+  "output": "./apps/api/src/generated-dtos",
+  "prefix": "Api"
+}

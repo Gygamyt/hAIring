@@ -1,0 +1,536 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "InterviewAI Backend",
+    "description": "API for AI-assistant for interviews.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/prep/": {
+      "post": {
+        "tags": [
+          "Interview Preparation"
+        ],
+        "summary": "Анализ данных кандидата для подготовки к интервью",
+        "description": "Принимает резюме, фидбэк и ссылку на требования для генерации плана интервью.",
+        "operationId": "analyze_preparation_endpoint_api_prep__post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_analyze_preparation_endpoint_api_prep__post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparationAnalysis"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/results/": {
+      "post": {
+        "tags": [
+          "Interview Results"
+        ],
+        "summary": "Запустить анализ результатов интервью",
+        "description": "Принимает данные для анализа, ставит задачу в очередь и немедленно возвращает ее ID.",
+        "operationId": "create_analysis_task_api_results__post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_analysis_task_api_results__post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/results/status/{job_id}": {
+      "get": {
+        "tags": [
+          "Interview Results"
+        ],
+        "summary": "Проверить статус задачи анализа",
+        "description": "Возвращает текущий статус задачи и результат, если она успешно завершена.",
+        "operationId": "get_analysis_status_api_results_status__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatusResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Health Check",
+        "description": "A simple endpoint to check if the server is running.",
+        "operationId": "read_root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "summary": "Get Version",
+        "operationId": "get_version_version_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_analyze_preparation_endpoint_api_prep__post": {
+        "properties": {
+          "cv_file": {
+            "type": "string",
+            "format": "binary",
+            "title": "Cv File",
+            "description": "Резюме кандидата (.txt, .pdf, .docx)."
+          },
+          "feedback_text": {
+            "type": "string",
+            "title": "Feedback Text",
+            "description": "Фидбэк от рекрутера в виде текста."
+          },
+          "requirements_link": {
+            "type": "string",
+            "title": "Requirements Link",
+            "description": "Ссылка на Google Таблицу с требованиями."
+          }
+        },
+        "type": "object",
+        "required": [
+          "cv_file",
+          "feedback_text",
+          "requirements_link"
+        ],
+        "title": "Body_analyze_preparation_endpoint_api_prep__post"
+      },
+      "Body_create_analysis_task_api_results__post": {
+        "properties": {
+          "cv_file": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cv File",
+            "description": "Резюме кандидата (.pdf, .docx, .txt)."
+          },
+          "video_link": {
+            "type": "string",
+            "title": "Video Link",
+            "description": "Ссылка на видеозапись собеседования."
+          },
+          "competency_matrix_link": {
+            "type": "string",
+            "title": "Competency Matrix Link",
+            "description": "Ссылка на матрицу компетенций QA/AQA."
+          },
+          "department_values_link": {
+            "type": "string",
+            "title": "Department Values Link",
+            "description": "Ссылка на ценности департамента."
+          },
+          "employee_portrait_link": {
+            "type": "string",
+            "title": "Employee Portrait Link",
+            "description": "Ссылка на портрет сотрудника."
+          },
+          "job_requirements_link": {
+            "type": "string",
+            "title": "Job Requirements Link",
+            "description": "Ссылка на требования к вакансии."
+          }
+        },
+        "type": "object",
+        "required": [
+          "video_link",
+          "competency_matrix_link",
+          "department_values_link",
+          "employee_portrait_link",
+          "job_requirements_link"
+        ],
+        "title": "Body_create_analysis_task_api_results__post"
+      },
+      "Conclusion": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "recommendations": {
+            "type": "string",
+            "title": "Recommendations"
+          },
+          "interview_topics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Interview Topics"
+          },
+          "values_assessment": {
+            "type": "string",
+            "title": "Values Assessment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "recommendations",
+          "interview_topics",
+          "values_assessment"
+        ],
+        "title": "Conclusion"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JobStatusResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status"
+        ],
+        "title": "JobStatusResponse"
+      },
+      "MatchingItem": {
+        "properties": {
+          "criterion": {
+            "type": "string",
+            "title": "Criterion"
+          },
+          "match": {
+            "type": "string",
+            "title": "Match"
+          },
+          "comment": {
+            "type": "string",
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "criterion",
+          "match",
+          "comment"
+        ],
+        "title": "MatchingItem"
+      },
+      "PreparationAnalysis": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "report": {
+            "$ref": "#/components/schemas/Report"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "report"
+        ],
+        "title": "PreparationAnalysis"
+      },
+      "Report": {
+        "properties": {
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "matching_table": {
+            "items": {
+              "$ref": "#/components/schemas/MatchingItem"
+            },
+            "type": "array",
+            "title": "Matching Table"
+          },
+          "candidate_profile": {
+            "type": "string",
+            "title": "Candidate Profile"
+          },
+          "conclusion": {
+            "$ref": "#/components/schemas/Conclusion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "matching_table",
+          "candidate_profile",
+          "conclusion"
+        ],
+        "title": "Report"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -56,6 +56,7 @@ export class TranscriptionService {
             this.logger.error(`An unexpected error occurred during the transcription process: ${error.message}`, error.stack);
             throw error;
         } finally {
+            //todo add cleaning
         }
     }
 }
