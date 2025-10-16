@@ -7,11 +7,9 @@ import {
     ParseFilePipe,
     MaxFileSizeValidator,
     FileTypeValidator,
-    HttpException,
-    HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Express } from 'express'; // Для типа Express.Multer.File
+import { Express } from 'express';
 import { ApiConsumes, ApiBody, ApiResponse } from '@nestjs/swagger';
 
 import { PreparationService } from './preparation.service';
