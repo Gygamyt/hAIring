@@ -176,6 +176,9 @@ importers:
 
   packages/ai-pipelines:
     dependencies:
+      '@hairing/config-jest':
+        specifier: workspace:^
+        version: link:../config-jest
       '@hairing/config-tsconfig':
         specifier: workspace:^
         version: link:../config-tsconfig
@@ -194,6 +197,9 @@ importers:
       '@nestjs/config':
         specifier: ^3.0.0
         version: 3.3.0(@nestjs/common@10.4.20(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@types/jest':
+        specifier: ^29.5.2
+        version: 29.5.14
       langchain:
         specifier: ^0.3.36
         version: 0.3.36(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.3)(zod@3.25.76)))(@langchain/google-genai@0.2.18(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.3)(zod@3.25.76))))(axios@1.12.2)(handlebars@4.7.8)(openai@5.12.2(ws@8.18.3)(zod@3.25.76))(ws@8.18.3)

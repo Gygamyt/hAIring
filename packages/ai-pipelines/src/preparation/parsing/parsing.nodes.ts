@@ -19,7 +19,7 @@ import {
  * @returns An async function that takes the preparation state and returns parsed CV data.
  */
 export const createCvParserNode = (llm: ChatGoogleGenerativeAI) =>
-    async (state: PreparationGraphState): Promise<{ parsedCv: CvData }> => {
+    async (state: PreparationGraphState): Promise<Partial<PreparationGraphState>> => {
         console.log('--- 🚀 Executing Node: CV Parser ---');
         const chain = cvParserPrompt.pipe(llm).pipe(new JsonOutputParser());
         const result = await chain.invoke({ cvText: state.cvText });
@@ -34,7 +34,7 @@ export const createCvParserNode = (llm: ChatGoogleGenerativeAI) =>
  * @returns An async function that takes the preparation state and returns parsed requirements data.
  */
 export const createRequirementsParserNode = (llm: ChatGoogleGenerativeAI) =>
-    async (state: PreparationGraphState): Promise<{ parsedRequirements: RequirementsData }> => {
+    async (state: PreparationGraphState): Promise<Partial<PreparationGraphState>> => {
         console.log('--- 🚀 Executing Node: Requirements Parser ---');
         const chain = requirementsParserPrompt.pipe(llm).pipe(new JsonOutputParser());
         const result = await chain.invoke({ requirementsText: state.requirementsText });
@@ -49,7 +49,7 @@ export const createRequirementsParserNode = (llm: ChatGoogleGenerativeAI) =>
  * @returns An async function that takes the preparation state and returns parsed feedback data.
  */
 export const createFeedbackParserNode = (llm: ChatGoogleGenerativeAI) =>
-    async (state: PreparationGraphState): Promise<{ parsedFeedback: FeedbackData }> => {
+    async (state: PreparationGraphState): Promise<Partial<PreparationGraphState>> => {
         console.log('--- 🚀 Executing Node: Feedback Parser ---');
         const chain = feedbackParserPrompt.pipe(llm).pipe(new JsonOutputParser());
         const result = await chain.invoke({ feedbackText: state.feedbackText });
