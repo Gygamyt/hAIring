@@ -1,4 +1,4 @@
-import { Annotation, AnnotationRoot } from '@langchain/langgraph';
+import { AnnotationRoot } from '@langchain/langgraph';
 
 /**
  * A TypeScript utility type to infer the plain data object type
@@ -11,6 +11,6 @@ import { Annotation, AnnotationRoot } from '@langchain/langgraph';
  */
 export type InferGraphState<T extends AnnotationRoot<any>> = T extends AnnotationRoot<infer U>
     ? {
-        -readonly [K in keyof U]?: U[K] extends Annotation<infer V> ? V : never;
+        -readonly [K in keyof U]?: U[K] extends AnnotationRoot<infer V> ? V : never;
     }
     : never;

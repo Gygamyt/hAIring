@@ -1,5 +1,5 @@
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
-import { createCandidatePipeline } from "../preparation/candidate.graph";
+import { createCandidatePipeline } from "../preparation";
 
 
 const mockCvData = { first_name: 'Иван', last_name: 'Иванов', skills: [], experience: '' };
