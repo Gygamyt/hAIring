@@ -24,6 +24,8 @@ import { InferGraphState } from "../utils";
  * It combines all channels from the subgraphs into a single, unified state.
  */
 export const CandidatePipelineSchema = Annotation.Root({
+    traceId: Annotation<string>(),
+
     // --- Initial Inputs (from parsing) ---
     cvText: Annotation<string>(),
     requirementsText: Annotation<string>(),

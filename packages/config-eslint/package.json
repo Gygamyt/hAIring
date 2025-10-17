@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc --watch",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
+  },
   "devDependencies": {
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5"

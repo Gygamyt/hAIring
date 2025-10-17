@@ -159,3 +159,4 @@ dist
 next-env.d.ts
 /.idea/
 /.turbo/
+/packages/nest-ai/.turbo/

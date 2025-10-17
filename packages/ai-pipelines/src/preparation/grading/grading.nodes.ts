@@ -14,6 +14,8 @@ import {
 import type { GradingGraphState } from './grading.state';
 import type { Assessment } from './grading.state';
 import { AggregatedData } from "../parsing/parsing.state";
+import { Logger } from '@nestjs/common';
+import chalk from "chalk";
 
 /**
  * Creates a node to determine the candidate's grade and type.
@@ -22,8 +24,6 @@ import { AggregatedData } from "../parsing/parsing.state";
  */
 export const createGradeAndTypeNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
-        console.log('--- 🤖 Executing Node: Grade & Type ---');
-
         const aggregatedResult = state.aggregatedResult as AggregatedData;
         if (!aggregatedResult) {
             throw new Error("Input 'aggregatedResult' is missing from the state.");
@@ -32,9 +32,10 @@ export const createGradeAndTypeNode = (llm: ChatGoogleGenerativeAI) =>
         const chain = gradeAndTypePrompt.pipe(llm).pipe(new JsonOutputParser());
 
         const result = await chain.invoke({
-            candidateInfo: JSON.stringify(aggregatedResult?.candidate_info),
-            jobRequirements: JSON.stringify(aggregatedResult?.job_requirements),
-        });
+                candidateInfo: JSON.stringify(aggregatedResult?.candidate_info),
+                jobRequirements: JSON.stringify(aggregatedResult?.job_requirements),
+            },
+            { metadata: { node: 'GradeAndTypeNode' } });
 
         const gradeAndType = GradeAndTypeSchema.parse(result);
         return { gradeAndType };
@@ -47,7 +48,6 @@ export const createGradeAndTypeNode = (llm: ChatGoogleGenerativeAI) =>
  */
 export const createCriteriaMatchingNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
-        console.log('--- 🤖 Executing Node: Criteria Matching ---');
         const aggregatedResult = state.aggregatedResult as AggregatedData;
         if (!aggregatedResult) {
             throw new Error("Input 'aggregatedResult' is missing from the state.");
@@ -56,10 +56,11 @@ export const createCriteriaMatchingNode = (llm: ChatGoogleGenerativeAI) =>
         const chain = criteriaMatchingPrompt.pipe(llm).pipe(new JsonOutputParser());
 
         const result = await chain.invoke({
-            candidateInfo: JSON.stringify(aggregatedResult?.candidate_info),
-            jobRequirements: JSON.stringify(aggregatedResult?.job_requirements),
-            recruiterFeedback: JSON.stringify(aggregatedResult?.recruiter_feedback),
-        });
+                candidateInfo: JSON.stringify(aggregatedResult?.candidate_info),
+                jobRequirements: JSON.stringify(aggregatedResult?.job_requirements),
+                recruiterFeedback: JSON.stringify(aggregatedResult?.recruiter_feedback),
+            },
+            { metadata: { node: 'CriteriaMatchingNode' } });
 
         const criteriaMatching = CriteriaMatchingSchema.parse(result);
         return { criteriaMatching };
@@ -72,7 +73,6 @@ export const createCriteriaMatchingNode = (llm: ChatGoogleGenerativeAI) =>
  */
 export const createValuesAssessmentNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
-        console.log('--- 🤖 Executing Node: Values Assessment ---');
         const aggregatedResult = state.aggregatedResult as AggregatedData;
         if (!aggregatedResult) {
             throw new Error("Input 'aggregatedResult' is missing from the state.");
@@ -81,9 +81,10 @@ export const createValuesAssessmentNode = (llm: ChatGoogleGenerativeAI) =>
         const chain = valuesAssessmentPrompt.pipe(llm).pipe(new JsonOutputParser());
 
         const result = await chain.invoke({
-            softSkillsRequired: JSON.stringify(aggregatedResult?.job_requirements.soft_skills_required),
-            recruiterFeedback: JSON.stringify(aggregatedResult?.recruiter_feedback),
-        });
+                softSkillsRequired: JSON.stringify(aggregatedResult?.job_requirements.soft_skills_required),
+                recruiterFeedback: JSON.stringify(aggregatedResult?.recruiter_feedback),
+            },
+            { metadata: { node: 'ValuesAssessmentNode' } });
 
         const valuesAssessment = ValuesAssessmentSchema.parse(result);
         return { valuesAssessment };
@@ -96,7 +97,10 @@ export const createValuesAssessmentNode = (llm: ChatGoogleGenerativeAI) =>
  * @returns A partial state object with the final result.
  */
 export const assessmentAggregatorNode = (state: GradingGraphState): { finalResult: FinalResult } => {
-    console.log('--- 🖇️ Executing Node: Assessment Aggregator ---');
+    const logger = new Logger('AggregatorNode');
+    const traceId = (state as any).traceId;
+
+    logger.log(`${chalk.blue('Aggregator Started')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`);
 
     if (!state.aggregatedResult || !state.gradeAndType || !state.criteriaMatching || !state.valuesAssessment) {
         throw new Error('Assessment aggregator received incomplete data.');
@@ -125,6 +129,8 @@ export const assessmentAggregatorNode = (state: GradingGraphState): { finalResul
         ...aggregatedResult,
         assessment: AssessmentSchema.parse(assessment),
     };
+
+    logger.log(`${chalk.cyan('Aggregator Finished')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`);
 
     return { finalResult };
 };

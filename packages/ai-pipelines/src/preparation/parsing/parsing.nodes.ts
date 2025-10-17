@@ -11,6 +11,8 @@ import {
     RequirementsData,
     FeedbackData,
 } from './parsing.state';
+import { Logger } from '@nestjs/common';
+import chalk from "chalk";
 
 /**
  * Creates a parser node for CV texts.
@@ -20,9 +22,8 @@ import {
  */
 export const createCvParserNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: PreparationGraphState): Promise<Partial<PreparationGraphState>> => {
-        console.log('--- 🚀 Executing Node: CV Parser ---');
         const chain = cvParserPrompt.pipe(llm).pipe(new JsonOutputParser());
-        const result = await chain.invoke({ cvText: state.cvText });
+        const result = await chain.invoke({ cvText: state.cvText }, { metadata: { node: 'CvParserNode' } });
         const cvData = CvDataSchema.parse(result);
         return { parsedCv: cvData };
     };
@@ -35,9 +36,8 @@ export const createCvParserNode = (llm: ChatGoogleGenerativeAI) =>
  */
 export const createRequirementsParserNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: PreparationGraphState): Promise<Partial<PreparationGraphState>> => {
-        console.log('--- 🚀 Executing Node: Requirements Parser ---');
         const chain = requirementsParserPrompt.pipe(llm).pipe(new JsonOutputParser());
-        const result = await chain.invoke({ requirementsText: state.requirementsText });
+        const result = await chain.invoke({ requirementsText: state.requirementsText }, { metadata: { node: 'RequirementsParserNode' } });
         const requirementsData = RequirementsDataSchema.parse(result);
         return { parsedRequirements: requirementsData };
     };
@@ -50,9 +50,8 @@ export const createRequirementsParserNode = (llm: ChatGoogleGenerativeAI) =>
  */
 export const createFeedbackParserNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: PreparationGraphState): Promise<Partial<PreparationGraphState>> => {
-        console.log('--- 🚀 Executing Node: Feedback Parser ---');
         const chain = feedbackParserPrompt.pipe(llm).pipe(new JsonOutputParser());
-        const result = await chain.invoke({ feedbackText: state.feedbackText });
+        const result = await chain.invoke({ feedbackText: state.feedbackText }, { metadata: { node: 'FeedbackParserNode' } });
         const feedbackData = FeedbackDataSchema.parse(result);
         return { parsedFeedback: feedbackData };
     };
@@ -65,9 +64,14 @@ export const createFeedbackParserNode = (llm: ChatGoogleGenerativeAI) =>
  * @returns An object with the aggregated result conforming to AggregatedData.
  */
 export const aggregatorNode = (state: PreparationGraphState): { aggregatedResult: AggregatedData } => {
-    console.log('--- 🖇️ Executing Node: Aggregator ---');
+    const logger = new Logger('AggregatorNode');
+    const traceId = (state as any).traceId;
+    logger.log(`${chalk.blue('Aggregator Started')} ${chalk.green('for node:')} ${chalk.yellow('ParsingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`);
+
     if (!state.parsedCv || !state.parsedRequirements || !state.parsedFeedback) {
-        throw new Error('Aggregator received incomplete data.');
+        const errorMessage = 'Aggregator received incomplete data.';
+        logger.error({ traceId, message: errorMessage });
+        throw new Error(errorMessage);
     }
 
     const aggregatedResult: AggregatedData = {
@@ -75,6 +79,8 @@ export const aggregatorNode = (state: PreparationGraphState): { aggregatedResult
         job_requirements: state.parsedRequirements as RequirementsData,
         recruiter_feedback: state.parsedFeedback as FeedbackData,
     };
+
+    logger.log(`${chalk.blue('Aggregator Finished')} ${chalk.green('for node:')} ${chalk.yellow('ParsingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`);
 
     return { aggregatedResult };
 };

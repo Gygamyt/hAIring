@@ -5,13 +5,18 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
   },
   "peerDependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0"
   },
   "dependencies": {
+    "@hairing/utils": "workspace:^",
     "assemblyai": "^4.17.0"
   },
   "devDependencies": {

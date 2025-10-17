@@ -1,0 +1,19 @@
+{
+  "name": "@hairing/utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {
+    "@hairing/config-tsconfig": "workspace:^"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rimraf dist",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gygamyt/hAIring.git"
+  },
+  "private": true
+}

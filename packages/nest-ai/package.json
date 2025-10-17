@@ -6,16 +6,24 @@
   "types": "src/index.ts",
   "description": "",
   "peerDependencies": {
-    "@hairing/config-tsconfig": "workspace:^",
-    "@langchain/google-genai": "^0.2.18"
+    "@langchain/google-genai": "^0.2.18",
+    "@langchain/core": "^0.3.78"
   },
   "dependencies": {
+    "@hairing/utils": "workspace:^",
     "@hairing/ai-pipelines": "workspace:*",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0"
   },
+  "devDependencies": {
+    "@hairing/config-tsconfig": "workspace:^"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
   },
   "repository": {
     "type": "git",

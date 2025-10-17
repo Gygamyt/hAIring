@@ -4,9 +4,7 @@ import {
     UseInterceptors,
     UploadedFile,
     Body,
-    ParseFilePipe,
-    MaxFileSizeValidator,
-    FileTypeValidator,
+
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
@@ -16,6 +14,7 @@ import { PreparationService } from './preparation.service';
 import { AnalyzePreparationDto } from './dto/analyze-preparation.dto';
 import { PreparationAnalysisResponseDto } from './dto/preparation-analysis-response.dto';
 import { ErrorResponseDto } from "../shared/dto/error-response.dto";
+import { FallbackFileValidatorPipe } from "./fallback-file-validator.pipe";
 
 @Controller('api/prep')
 export class PreparationController {
@@ -39,20 +38,12 @@ export class PreparationController {
     })
     @UseInterceptors(FileInterceptor('cv_file'))
     async analyzePreparation(
-        @UploadedFile(
-            new ParseFilePipe({
-                validators: [
-                    new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
-                    new FileTypeValidator({ fileType: /(pdf|docx|txt)$/ }),
-                ],
-            }),
-        )
-        cvFile: Express.Multer.File,
         @Body() body: AnalyzePreparationDto,
+        @UploadedFile(new FallbackFileValidatorPipe()) cvFile?: Express.Multer.File,
     ): Promise<PreparationAnalysisResponseDto> {
         return this.preparationService.analyze(
-            cvFile.buffer,
-            cvFile.originalname,
+            cvFile?.buffer,
+            cvFile?.originalname,
             body.feedback_text,
             body.requirements_link,
         );

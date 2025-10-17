@@ -4,10 +4,11 @@
   "packageManager": "pnpm@9.4.0",
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev --parallel",
+    "dev": "turbo run start:dev --filter=api --parallel",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "clean": "turbo run clean",
+    "clean:full": "npm run clean && rimraf --glob node_modules \"packages/**/node_modules\" \"apps/**/node_modules\"",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "gen:api": "openapi-generator-cli generate -i ./fastapi-spec.json -g typescript-nestjs -o ./apps/api/src/generated --additional-properties=generateModels=true,generateApis=false,disallowAdditionalPropertiesIfNotPresent=false"
   },
@@ -21,7 +22,11 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "chalk": "^5.6.2",
     "dotenv": "^17.2.3",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.1",
+    "uuid": "^13.0.0",
     "zod": "^3.25.32"
   }
 }

@@ -4,11 +4,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { ValidationPipe } from "@nestjs/common";
+import { ColoredLogger } from "./common/logger/colored.logger";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
-        logger: process.env.NODE_ENV === 'build' ? false : ['log', 'error', 'warn'],
+        // logger: process.env.NODE_ENV === 'build' ? false : ['log', 'error', 'warn'],
+        logger: false,
     });
+    app.useLogger(new ColoredLogger());
 
     app.useGlobalPipes(new ValidationPipe({
         whitelist: true,

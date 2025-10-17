@@ -35,7 +35,7 @@ class ConclusionDto {
     values_assessment!: string;
 }
 
-class ReportDto {
+export class ReportDto {
     @ApiProperty({ required: false, nullable: true })
     first_name?: string | null;
 

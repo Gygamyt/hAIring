@@ -13,6 +13,8 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { FinalResult } from "../grading";
 import { interviewTopicsPrompt, recommendationsPrompt, summaryPrompt } from "./reporting.prompts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
+import { Logger } from '@nestjs/common';
+import chalk from "chalk";
 
 /**
  * Creates a node to generate a comprehensive summary.
@@ -21,13 +23,12 @@ import { JsonOutputParser } from "@langchain/core/output_parsers";
  */
 export const createSummaryNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: ReportingGraphState): Promise<Partial<ReportingGraphState>> => {
-        console.log('--- 🤖 Executing Node: Summary ---');
         const finalResult = state.finalResult as FinalResult;
 
         const chain = summaryPrompt.pipe(llm).pipe(new JsonOutputParser());
         const result = await chain.invoke({
             fullAssessmentData: JSON.stringify(finalResult),
-        });
+        }, { metadata: { node: 'SummaryNode' } });
 
         const summary = SummarySchema.parse(result);
         return { summary };
@@ -40,13 +41,12 @@ export const createSummaryNode = (llm: ChatGoogleGenerativeAI) =>
  */
 export const createRecommendationsNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: ReportingGraphState): Promise<Partial<ReportingGraphState>> => {
-        console.log('--- 🤖 Executing Node: Recommendations ---');
         const finalResult = state.finalResult as FinalResult;
 
         const chain = recommendationsPrompt.pipe(llm).pipe(new JsonOutputParser());
         const result = await chain.invoke({
             criteriaMatching: JSON.stringify(finalResult.assessment.criteria_matching),
-        });
+        }, { metadata: { node: 'RecommendationsNode' } });
 
         const recommendations = RecommendationsSchema.parse(result);
         return { recommendations };
@@ -59,13 +59,12 @@ export const createRecommendationsNode = (llm: ChatGoogleGenerativeAI) =>
  */
 export const createInterviewTopicsNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: ReportingGraphState): Promise<Partial<ReportingGraphState>> => {
-        console.log('--- 🤖 Executing Node: Interview Topics ---');
         const finalResult = state.finalResult as FinalResult;
 
         const chain = interviewTopicsPrompt.pipe(llm).pipe(new JsonOutputParser());
         const result = await chain.invoke({
             fullAssessmentData: JSON.stringify(finalResult),
-        });
+        }, { metadata: { node: 'InterviewTopicsNode' } });
 
         const interviewTopics = InterviewTopicsSchema.parse(result);
         return { interviewTopics };
@@ -77,9 +76,14 @@ export const createInterviewTopicsNode = (llm: ChatGoogleGenerativeAI) =>
  * @returns A partial state object with the final report.
  */
 export const reportBuilderNode = (state: ReportingGraphState): { report: Report } => {
-    console.log('--- 🖇️ Executing Node: Report Builder ---');
+    const logger = new Logger('ReportBuilderNode');
+    const traceId = (state as any).traceId;
+
+    logger.log(`${chalk.blue('Builder Started')} ${chalk.green('for node:')} ${chalk.yellow('ReportBuilderNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`)
 
     if (!state.finalResult || !state.summary || !state.recommendations || !state.interviewTopics) {
+        const errorMessage = 'Report builder received incomplete data.';
+        logger.error({ traceId, message: errorMessage });
         throw new Error('Report builder received incomplete data.');
     }
 
@@ -109,6 +113,8 @@ export const reportBuilderNode = (state: ReportingGraphState): { report: Report 
     };
 
     const validatedReport = ReportSchema.parse(report);
+
+    logger.log(`${chalk.blue('Builder Finished')} ${chalk.green('for node:')} ${chalk.yellow('ReportBuilderNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`)
 
     return { report: validatedReport };
 };

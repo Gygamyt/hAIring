@@ -36,17 +36,16 @@ import { GradingGraphStateAnnotation } from './grading.state';
  * @remarks
  * Graph structure (ASCII diagram):
  *```
- *    START
- *      |
- *    ╱ | ╲
- *   ╱  |  ╲
- *  grade criteria values
- *  And   Match  Assessment
- *    ╲  |  ╱
- *     ╲ | ╱
- *   aggregator
- *      |
- *     END
+ *        START
+ *          |
+ *        ╱ | ╲
+ *      ╱   |  ╲
+ * grade criteria values
+ *   ╲      |      ╱
+ *     ╲    |     ╱
+ *      aggregator
+ *          |
+ *         END
  *```
  * The parallel execution occurs in a single "superstep" where all three parsers
  * run concurrently. The aggregator node is only invoked after all parser nodes

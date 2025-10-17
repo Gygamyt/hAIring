@@ -1,48 +1,97 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { PreparationAnalysisResponseDto } from './dto/preparation-analysis-response.dto';
+import {
+    Injectable,
+    Logger,
+    HttpException,
+    HttpStatus,
+    Inject,
+} from '@nestjs/common';
+import { PreparationAnalysisResponseDto, ReportDto } from './dto/preparation-analysis-response.dto';
+import { DocumentParserService } from '@hairing/document-parser';
+import { GoogleDriveService } from '@hairing/google-drive';
+import { CANDIDATE_PIPELINE_PROVIDER } from '@hairing/nest-ai';
+import type { CompiledStateGraph } from '@langchain/langgraph';
+import { CandidatePipelineState } from "@hairing/ai-pipelines/src/preparation/candidate.state";
+import { v4 as uuidv4 } from 'uuid';
+import chalk from "chalk";
 
 @Injectable()
 export class PreparationService {
     private readonly logger = new Logger(PreparationService.name);
 
+    constructor(
+        private readonly documentParserService: DocumentParserService,
+        private readonly googleDriveService: GoogleDriveService,
+        @Inject(CANDIDATE_PIPELINE_PROVIDER)
+        private readonly candidatePipeline: CompiledStateGraph<
+            CandidatePipelineState,
+            CandidatePipelineState
+        >,
+    ) {}
+
     async analyze(
-        cvFileBuffer: Buffer,
-        cvFileName: string,
+        cvFileBuffer: Buffer | undefined,
+        cvFileName: string | undefined,
         feedbackText: string,
         requirementsLink: string,
     ): Promise<PreparationAnalysisResponseDto> {
-        this.logger.log(`Получен новый запрос на оценку кандидата: ${cvFileName}`);
+        let cvText = '';
+
+        this.logger.log(`${chalk.green(`Starting full analysis for candidate file: ${chalk.bold(cvFileName)}`)}`,);
+
+        if (cvFileBuffer && cvFileName) {
+            this.logger.log(`${chalk.green(`CV file provided: ${chalk.bold(cvFileName)}. Extracting text.`)}`);
+            cvText = await this.documentParserService.read(
+                cvFileBuffer,
+                cvFileName,
+            );
+            this.logger.log('CV text extracted successfully.');
+        } else {
+            this.logger.log('CV file not provided. Proceeding without it.');
+        }
 
         try {
-            //
-            // !!! ЗДЕСЬ БУДЕТ ЛОГИКА ИЗ ТВОЕГО `analysis_service.analyze_preparation` !!!
-            // Например, вызов AI, работа с Google Drive и т.д.
-            //
-            // Пока что мы вернем мок-ответ, как делали раньше.
-            const mockResult: PreparationAnalysisResponseDto = {
-                message: 'Analysis successful. Mocked data.',
-                success: true,
-                report: {
-                    matching_table: [],
-                    candidate_profile: '',
-                    conclusion:
-                },
+            this.logger.log('CV text extracted successfully.');
+
+            const requirementsText =
+                await this.googleDriveService.downloadSheet(requirementsLink);
+            this.logger.log(
+                'Requirements text downloaded successfully from Google Drive.',
+            );
+
+            const traceId = uuidv4();
+
+            const pipelineInput: Partial<CandidatePipelineState> = {
+                traceId,
+                cvText,
+                requirementsText,
+                feedbackText,
             };
 
-            this.logger.log('Анализ успешно завершен. Возвращается результат.');
-            return mockResult;
+            this.logger.log('Invoking the AI candidate pipeline...');
+            const finalState = await this.candidatePipeline.invoke(pipelineInput);
+            this.logger.log('AI pipeline executed successfully.');
 
+            if (!finalState?.report) {
+                throw new Error('AI pipeline did not return the final report.');
+            }
+
+            return {
+                success: true,
+                message: 'Analysis successful.',
+                report: finalState.report as ReportDto,
+            };
         } catch (error) {
-            this.logger.error(`Произошла ошибка во время анализа: ${error.message}`, error.stack);
+            // @ts-ignore
+            this.logger.error(`An error occurred during the analysis pipeline: ${error.message}`);
 
-            // Здесь мы можем обрабатывать специфичные ошибки, как ты делал с ValueError
-            if (error instanceof Error /* Заменить на твой тип ошибки */) {
+            // @ts-ignore
+            if (error.message.includes('Google Drive')) {
+                // @ts-ignore
                 throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
             }
 
-            // Общая ошибка "на всякий случай"
             throw new HttpException(
-                'Произошла внутренняя ошибка сервера',
+                'An internal server error occurred during analysis.',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }

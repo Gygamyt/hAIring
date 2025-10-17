@@ -6,10 +6,10 @@ import { PromptTemplate } from '@langchain/core/prompts';
  */
 export const gradeAndTypePrompt = PromptTemplate.fromTemplate(
     `As an experienced team lead, analyze the candidate's info and job requirements below.
-Your ONLY task is to determine the candidate's most likely grade (Trainee, Junior, Middle, Senior) and type (QA or AQA).
+Your ONLY task is to determine the candidate's most likely grade and type.
 Base your analysis strictly on the provided data.
 
-Return the output STRICTLY in a JSON format. The JSON values **must be in Russian**.
+Return the output STRICTLY in a JSON format. The JSON values must be in Russian, **with one exception: the values for "grade" and "type" MUST be in English** from the allowed options.
 
 Candidate Info:
 {candidateInfo}
@@ -19,8 +19,8 @@ Job Requirements:
 
 JSON output format:
 {{
-  "grade": "...",
-  "type": "..."
+  "grade": "Trainee" | "Junior" | "Middle" | "Senior",
+  "type": "QA" | "AQA"
 }}`
 );
 
