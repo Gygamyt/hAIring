@@ -24,30 +24,64 @@ import { InferGraphState } from "../utils";
  * It combines all channels from the subgraphs into a single, unified state.
  */
 export const CandidatePipelineSchema = Annotation.Root({
-    traceId: Annotation<string>(),
+    traceId: Annotation<string | null>(),
+    graphError: Annotation<string | null>(),
 
-    // --- Initial Inputs (from parsing) ---
-    cvText: Annotation<string>(),
-    requirementsText: Annotation<string>(),
-    feedbackText: Annotation<string>(),
+    // --- 1. Initial Inputs ---
+    cvText: Annotation<string | null>(),
+    requirementsText: Annotation<string | null>(),
+    feedbackText: Annotation<string | null>(),
 
-    // --- Parsing Subgraph Outputs ---
-    parsedCv: Annotation<CvData>(),
-    parsedRequirements: Annotation<RequirementsData>(),
-    parsedFeedback: Annotation<FeedbackData>(),
-    aggregatedResult: Annotation<AggregatedData>(),
+    // --- 2. Parsing Subgraph State ---
+    // Outputs
+    parsedCv: Annotation<CvData | null>(),
+    parsedRequirements: Annotation<RequirementsData | null>(),
+    parsedFeedback: Annotation<FeedbackData | null>(),
+    aggregatedResult: Annotation<AggregatedData | null>(),
+    // Internal (for retries)
+    rawCv: Annotation<string | null>(),
+    cvError: Annotation<string | null>(),
+    cvRetries: Annotation<number | null>(),
+    rawRequirements: Annotation<string | null>(),
+    requirementsError: Annotation<string | null>(),
+    requirementsRetries: Annotation<number | null>(),
+    rawFeedback: Annotation<string | null>(),
+    feedbackError: Annotation<string | null>(),
+    feedbackRetries: Annotation<number | null>(),
 
-    // --- Grading Subgraph Outputs ---
-    gradeAndType: Annotation<GradeAndType>(),
-    criteriaMatching: Annotation<CriteriaMatching>(),
-    valuesAssessment: Annotation<ValuesAssessment>(),
-    finalResult: Annotation<FinalResult>(),
+    // --- 3. Grading Subgraph State ---
+    // Outputs
+    gradeAndType: Annotation<GradeAndType | null>(),
+    criteriaMatching: Annotation<CriteriaMatching | null>(),
+    valuesAssessment: Annotation<ValuesAssessment | null>(),
+    finalResult: Annotation<FinalResult | null>(),
+    // Internal (for retries)
+    rawGradeAndType: Annotation<string | null>(),
+    gradeAndTypeError: Annotation<string | null>(),
+    gradeAndTypeRetries: Annotation<number | null>(),
+    rawCriteriaMatching: Annotation<string | null>(),
+    criteriaMatchingError: Annotation<string | null>(),
+    criteriaMatchingRetries: Annotation<number | null>(),
+    rawValuesAssessment: Annotation<string | null>(),
+    valuesAssessmentError: Annotation<string | null>(),
+    valuesAssessmentRetries: Annotation<number | null>(),
 
-    // --- Reporting Subgraph Outputs ---
-    summary: Annotation<Summary>(),
-    recommendations: Annotation<Recommendations>(),
-    interviewTopics: Annotation<InterviewTopics>(),
-    report: Annotation<Report>(),
+    // --- 4. Reporting Subgraph State ---
+    // Outputs
+    summary: Annotation<Summary | null>(),
+    recommendations: Annotation<Recommendations | null>(),
+    interviewTopics: Annotation<InterviewTopics | null>(),
+    report: Annotation<Report | null>(),
+    // Internal (for retries)
+    rawSummary: Annotation<string | null>(),
+    summaryError: Annotation<string | null>(),
+    summaryRetries: Annotation<number | null>(),
+    rawRecommendations: Annotation<string | null>(),
+    recommendationsError: Annotation<string | null>(),
+    recommendationsRetries: Annotation<number | null>(),
+    rawInterviewTopics: Annotation<string | null>(),
+    topicsError: Annotation<string | null>(),
+    topicsRetries: Annotation<number | null>(),
 });
 
 /**

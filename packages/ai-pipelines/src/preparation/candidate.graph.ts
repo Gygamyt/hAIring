@@ -4,6 +4,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { createParsingSubgraph } from "./parsing";
 import { createGradingSubgraph } from "./grading";
 import { createReportingSubgraph } from "./reporting";
+import { checkFailure, failureNode } from "./candidate.nodes";
 
 /**
  * Creates the main candidate processing pipeline by composing subgraphs.
@@ -13,10 +14,18 @@ import { createReportingSubgraph } from "./reporting";
  * @returns A compiled, runnable LangGraph workflow for the entire process.
  *
  * @remarks
- * The pipeline follows a clear, linear sequence of transformations:
- * 1. **Parsing**: Extracts and structures information from raw texts.
- * 2. **Grading**: Analyzes the structured data to produce an expert assessment.
- * 3. **Reporting**: Generates a final, human-readable report from the assessment.
+ * The pipeline is conditional:
+ * 1. `START -> parsing`
+ * 2. `parsing -> checkFailure`
+ * - (OK) -> `grading`
+ * - (FAIL) -> `failure`
+ * 3. `grading -> checkFailure`
+ * - (OK) -> `reporting`
+ * - (FAIL) -> `failure`
+ * 4. `reporting -> checkFailure`
+ * - (OK) -> `END`
+ * - (FAIL) -> `failure`
+ * 5. `failure -> END`
  */
 export const createCandidatePipeline = (llm: ChatGoogleGenerativeAI) => {
     const parsingSubgraph = createParsingSubgraph(llm);
@@ -27,10 +36,21 @@ export const createCandidatePipeline = (llm: ChatGoogleGenerativeAI) => {
         .addNode('parsing', parsingSubgraph)
         .addNode('grading', gradingSubgraph)
         .addNode('reporting', reportingSubgraph)
+        .addNode('failure', failureNode)
         .addEdge(START, 'parsing')
-        .addEdge('parsing', 'grading')
-        .addEdge('grading', 'reporting')
-        .addEdge('reporting', END);
+        .addConditionalEdges('parsing', checkFailure, {
+            '__CONTINUE__': 'grading',
+            'failure': 'failure',
+        })
+        .addConditionalEdges('grading', checkFailure, {
+            '__CONTINUE__': 'reporting',
+            'failure': 'failure',
+        })
+        .addConditionalEdges('reporting', checkFailure, {
+            '__CONTINUE__': END,
+            'failure': 'failure',
+        })
+        .addEdge('failure', END);
 
     return workflow.compile();
 };

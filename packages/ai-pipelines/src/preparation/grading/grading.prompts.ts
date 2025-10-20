@@ -1,5 +1,7 @@
 import { PromptTemplate } from '@langchain/core/prompts';
 
+/** --- Main logic nodes prompts --- */
+
 /**
  * Prompt to determine the candidate's grade and type.
  * Focuses ONLY on classification based on experience and skills.
@@ -81,4 +83,67 @@ JSON output format:
 {{
   "values_assessment": "..."
 }}`
+);
+
+/** --- Nodes-fixers prompts --- */
+
+/**
+ * Prompt to fix an invalid JSON output from criteriaMatchingNode.
+ * This is the "validator agent" prompt.
+ */
+export const fixCriteriaMatchingPrompt = PromptTemplate.fromTemplate(
+    `You are a JSON correction agent. A previous step failed to produce valid JSON based on a schema.
+Your task is to correct the invalid JSON. Pay close attention to the error message.
+
+- Ensure all enum values for the "match" field are *exactly* 'full', 'partial', or 'none'.
+- Ensure all other text values ("criterion", "comment") remain in Russian.
+- Return ONLY the corrected, valid JSON array.
+
+**The Error:**
+{error}
+
+**The Invalid JSON you produced:**
+{rawOutput}
+
+**Corrected JSON:**`
+);
+
+/**
+ * Prompt to fix an invalid JSON output from gradeAndTypePrompt.
+ */
+export const fixGradeAndTypePrompt = PromptTemplate.fromTemplate(
+    `You are a JSON correction agent. A previous step failed to produce valid JSON.
+Your task is to correct the invalid JSON. Pay close attention to the error message.
+
+- Ensure the "grade" value is *exactly* one of: 'Trainee', 'Junior', 'Middle', 'Senior'.
+- Ensure the "type" value is *exactly* one of: 'QA', 'AQA'.
+- Return ONLY the corrected, valid JSON object.
+
+**The Error:**
+{error}
+
+**The Invalid JSON you produced:**
+{rawOutput}
+
+**Corrected JSON:**`
+);
+
+/**
+ * Prompt to fix an invalid JSON output from valuesAssessmentPrompt.
+ */
+export const fixValuesAssessmentPrompt = PromptTemplate.fromTemplate(
+    `You are a JSON correction agent. A previous step failed to produce valid JSON.
+Your task is to correct the invalid JSON. Pay close attention to the error message.
+
+- Ensure the output is a single JSON object: {{"values_assessment": "..."}}.
+- Ensure the assessment text remains in Russian.
+- Return ONLY the corrected, valid JSON object.
+
+**The Error:**
+{error}
+
+**The Invalid JSON you produced:**
+{rawOutput}
+
+**Corrected JSON:**`
 );

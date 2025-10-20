@@ -24,7 +24,7 @@ export class PreparationService {
         @Inject(CANDIDATE_PIPELINE_PROVIDER)
         private readonly candidatePipeline: CompiledStateGraph<
             CandidatePipelineState,
-            CandidatePipelineState
+            Partial<CandidatePipelineState>
         >,
     ) {}
 
@@ -50,8 +50,6 @@ export class PreparationService {
         }
 
         try {
-            this.logger.log('CV text extracted successfully.');
-
             const requirementsText =
                 await this.googleDriveService.downloadSheet(requirementsLink);
             this.logger.log(
@@ -69,11 +67,25 @@ export class PreparationService {
 
             this.logger.log('Invoking the AI candidate pipeline...');
             const finalState = await this.candidatePipeline.invoke(pipelineInput);
+
+            const graphError = (finalState as any).graphError;
+
+            if (graphError) {
+                this.logger.error(`AI pipeline finished with a controlled error: ${graphError}`);
+                throw new HttpException(
+                    `Analysis failed: ${graphError}`,
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                );
+            }
+
             this.logger.log('AI pipeline executed successfully.');
 
             if (!finalState?.report) {
+                this.logger.error('AI pipeline finished successfully, but did not return the final report.');
                 throw new Error('AI pipeline did not return the final report.');
             }
+
+            this.logger.log('AI pipeline executed successfully.');
 
             return {
                 success: true,
@@ -83,6 +95,10 @@ export class PreparationService {
         } catch (error) {
             // @ts-ignore
             this.logger.error(`An error occurred during the analysis pipeline: ${error.message}`);
+
+            if (error instanceof HttpException) {
+                throw error;
+            }
 
             // @ts-ignore
             if (error.message.includes('Google Drive')) {

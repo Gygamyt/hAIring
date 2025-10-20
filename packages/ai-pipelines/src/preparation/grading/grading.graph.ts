@@ -1,71 +1,149 @@
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import {
-    createGradeAndTypeNode,
-    createCriteriaMatchingNode,
-    createValuesAssessmentNode,
+    createGradeAndTypeGenerateNode,
+    validateGradeAndTypeNode,
+    createFixGradeAndTypeNode,
+    createCriteriaMatchingGenerateNode,
+    validateCriteriaMatchingNode,
+    createFixCriteriaMatchingNode,
+    createValuesAssessmentGenerateNode,
+    validateValuesAssessmentNode,
+    createFixValuesAssessmentNode,
     assessmentAggregatorNode,
+    handleFailureNode,
 } from './grading.nodes';
-import { GradingGraphStateAnnotation } from './grading.state';
+
+import { GradingGraphStateAnnotation, GradingGraphState } from './grading.state';
+
+const MAX_RETRIES = 1;
 
 /**
- * Creates a LangGraph subgraph for candidate grading based on parsed data.
+ * Builds the full grading LangGraph workflow.
  *
- * Implements a fan-out/fan-in pattern:
- * - Fan-out: START forks into three analysis nodes:
- *   - `gradeAndType` – determine candidate’s grade and type
- *   - `criteriaMatching` – match candidate against job criteria
- *   - `valuesAssessment` – assess candidate’s cultural fit and values
- * - Fan-in: results converge in `aggregator` node
- * - TERMINATE at END
+ * This function creates a **fan-out/fan-in** architecture comprising three parallel evaluation tracks:
+ * each performs content grading, validation, and optional correction.
  *
- * @param llm An instance of ChatGoogleGenerativeAI used by each analysis node.
- * @returns A compiled StateGraph workflow ready to execute the grading pipeline.
+ * When any track exceeds the retry limit, the process immediately routes to an error handler node.
+ * Otherwise, all successful branches converge at the aggregator node.
+ *
+ * **Graph Design Summary:**
+ *
+ * - Three parallel grading tracks:
+ *   - Track 1: Grade & Type analysis
+ *   - Track 2: Criteria Matching evaluation
+ *   - Track 3: Values Assessment inspection
+ * - Each track has a local retry loop through “fix” nodes
+ * - `assessmentAggregatorNode` synchronizes results from all successful tracks
+ * - `handleFailureNode` terminates early if any branch fails
+ *
+ * @param llm - A ChatGoogleGenerativeAI model instance used by all parsing and validation nodes
+ * @returns A compiled StateGraph workflow ready to perform candidate grading
  *
  * @example
  * ```
  * const llm = new ChatGoogleGenerativeAI({ modelName: 'gemini-pro' });
  * const gradingGraph = createGradingSubgraph(llm);
  * const result = await gradingGraph.invoke({
- *   parsedCv: cvData,
- *   parsedRequirements: reqData,
- *   parsedFeedback: fbData,
+ *   cv: {...},
+ *   requirements: {...},
+ *   feedback: {...}
  * });
  * ```
  *
  * @remarks
- * Graph structure (ASCII diagram):
- *```
- *        START
- *          |
- *        ╱ | ╲
- *      ╱   |   ╲
- * grade criteria values
- *   ╲      |      ╱
- *     ╲    |     ╱
- *      aggregator
- *          |
- *         END
- *```
- * The parallel execution occurs in a single "superstep" where all three parsers
- * run concurrently. The aggregator node is only invoked after all parser nodes
- * have completed their execution, ensuring all parsed data is available for aggregation.
- * @see {@link GradingGraphStateAnnotation} for state schema definition
+ * **ASCII Flow Diagram**
+ *
+ * ```
+ *                               +------------------------+
+ *                               |        START           |
+ *                               +------------------------+
+ *                                         |
+ *       -------------------------------------------------------------------
+ *       |                                 |                               |
+ *  +------------------------------+  +-----------------------------+  +-----------------------------+
+ *  | Track 1: Grade & Type        |  | Track 2: Criteria Matching  |  | Track 3: Values Assessment |
+ *  +------------------------------+  +-----------------------------+  +-----------------------------+
+ *  | generate -> validate -> fix ↺ |  | generate -> validate -> fix ↺ |  | generate -> validate -> fix ↺ |
+ *       |                                 |                               |
+ *       |-------------(success)-----------|-------------(success)----------|
+ *                                         |
+ *                                +-------------------+
+ *                                |   AGGREGATOR      |
+ *                                +-------------------+
+ *                                         |
+ *                                +-------------------+
+ *                                |       END         |
+ *                                +-------------------+
+ *
+ * Failure shortcut:
+ * Any validation branch → handleFailureNode → END
+ * ```
  */
 export const createGradingSubgraph = (llm: ChatGoogleGenerativeAI) => {
-    const gradeAndTypeNode = createGradeAndTypeNode(llm);
-    const criteriaMatchingNode = createCriteriaMatchingNode(llm);
-    const valuesAssessmentNode = createValuesAssessmentNode(llm);
+    const routerGradeAndType = (state: GradingGraphState) => {
+        const error = state.gradeAndTypeError as string | null;
+        const retries = state.gradeAndTypeRetries as number | null;
+        if (!error) return 'aggregator';
+        if (retries !== null && retries >= MAX_RETRIES) return 'handleFailureNode';
+        return 'fixGradeAndTypeNode';
+    };
+
+    const routerCriteriaMatching = (state: GradingGraphState) => {
+        const error = state.criteriaMatchingError as string | null;
+        const retries = state.criteriaMatchingRetries as number | null;
+        if (!error) return 'aggregator';
+        if (retries !== null && retries >= MAX_RETRIES) return 'handleFailureNode';
+        return 'fixCriteriaMatchingNode';
+    };
+
+    const routerValuesAssessment = (state: GradingGraphState) => {
+        const error = state.valuesAssessmentError as string | null;
+        const retries = state.valuesAssessmentRetries as number | null;
+        if (!error) return 'aggregator';
+        if (retries !== null && retries >= MAX_RETRIES) return 'handleFailureNode';
+        return 'fixValuesAssessmentNode';
+    };
+
+    const gradeAndTypeGenerateNode = createGradeAndTypeGenerateNode(llm);
+    const fixGradeAndTypeNode = createFixGradeAndTypeNode(llm);
+
+    const criteriaMatchingGenerateNode = createCriteriaMatchingGenerateNode(llm);
+    const fixCriteriaMatchingNode = createFixCriteriaMatchingNode(llm);
+
+    const valuesAssessmentGenerateNode = createValuesAssessmentGenerateNode(llm);
+    const fixValuesAssessmentNode = createFixValuesAssessmentNode(llm);
 
     const workflow = new StateGraph(GradingGraphStateAnnotation)
-        .addNode('gradeAndTypeNode', gradeAndTypeNode)
-        .addNode('criteriaMatchingNode', criteriaMatchingNode)
-        .addNode('valuesAssessmentNode', valuesAssessmentNode)
-        .addNode('aggregator', assessmentAggregatorNode).addEdge(START, 'gradeAndTypeNode')
-        .addEdge(START, 'criteriaMatchingNode')
-        .addEdge(START, 'valuesAssessmentNode')
-        .addEdge(['gradeAndTypeNode', 'criteriaMatchingNode', 'valuesAssessmentNode'], 'aggregator')
-        .addEdge('aggregator', END);
+        .addNode('gradeAndTypeGenerateNode', gradeAndTypeGenerateNode)
+        .addNode('validateGradeAndTypeNode', validateGradeAndTypeNode)
+        .addNode('fixGradeAndTypeNode', fixGradeAndTypeNode)
+        .addNode('criteriaMatchingGenerateNode', criteriaMatchingGenerateNode)
+        .addNode('validateCriteriaMatchingNode', validateCriteriaMatchingNode)
+        .addNode('fixCriteriaMatchingNode', fixCriteriaMatchingNode)
+        .addNode('valuesAssessmentGenerateNode', valuesAssessmentGenerateNode)
+        .addNode('validateValuesAssessmentNode', validateValuesAssessmentNode)
+        .addNode('fixValuesAssessmentNode', fixValuesAssessmentNode)
+        .addNode('aggregator', assessmentAggregatorNode)
+        .addNode('handleFailureNode', handleFailureNode)
+        .addEdge(START, 'gradeAndTypeGenerateNode')
+        .addEdge(START, 'criteriaMatchingGenerateNode')
+        .addEdge(START, 'valuesAssessmentGenerateNode')
+        // Track 1: Loop-enabled flow
+        .addEdge('gradeAndTypeGenerateNode', 'validateGradeAndTypeNode')
+        .addConditionalEdges('validateGradeAndTypeNode', routerGradeAndType)
+        .addEdge('fixGradeAndTypeNode', 'validateGradeAndTypeNode')
+        // Track 2: Loop-enabled flow
+        .addEdge('criteriaMatchingGenerateNode', 'validateCriteriaMatchingNode')
+        .addConditionalEdges('validateCriteriaMatchingNode', routerCriteriaMatching)
+        .addEdge('fixCriteriaMatchingNode', 'validateCriteriaMatchingNode')
+        // Track 3: Loop-enabled flow
+        .addEdge('valuesAssessmentGenerateNode', 'validateValuesAssessmentNode')
+        .addConditionalEdges('validateValuesAssessmentNode', routerValuesAssessment)
+        .addEdge('fixValuesAssessmentNode', 'validateValuesAssessmentNode')
+        // Common exits
+        .addEdge('aggregator', END)
+        .addEdge('handleFailureNode', END);
 
     return workflow.compile();
 };
