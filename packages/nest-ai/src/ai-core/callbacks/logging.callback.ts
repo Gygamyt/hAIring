@@ -41,7 +41,7 @@ export class LoggingCallbackHandler extends BaseCallbackHandler {
             total: tokenUsage?.totalTokens ?? 0,
         };
 
-        const tokenDetails = `${chalk.gray('Tokens:')} ${chalk.gray('(')}${chalk.gray('I:')} ${chalk.cyan(tokens.prompt)}${chalk.gray(',')} ${chalk.gray('O:')}  ${chalk.magenta(tokens.completion)}${chalk.gray(',')} ${chalk.gray('T:')} ${chalk.bold(tokens.total)}${chalk.gray(')')}`;
+        const tokenDetails = `${chalk.gray('Tokens:')} ${chalk.gray('(')}${chalk.gray('I:')} ${chalk.cyan(tokens.prompt)}${chalk.gray(',')} ${chalk.gray('O:')}  ${chalk.magenta(tokens.completion)}${chalk.gray(',')} ${chalk.gray('T:')} ${chalk.yellowBright(tokens.total)}${chalk.gray(')')}`;
 
         const message = `${chalk.cyan('LLM Call Succeeded')} ${chalk.green('-')} ${chalk.yellow(`${duration}ms`)} ${chalk.green('|')} ${tokenDetails}`;
 

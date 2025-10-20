@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/nodemon.json",
+  "watch": [
+    "src",
+    "../../packages/ai-pipelines/src",
+    "../../packages/nest-ai/src",
+    "../../packages/document-parser/src",
+    "../../packages/google-drive/src",
+    "../../packages/transcription/src",
+    "../../packages/utils/src"
+  ],
+  "ext": "ts,json",
+  "ignore": ["src/**/*.spec.ts"],
+  "exec": "ts-node --transpile-only src/main.ts"
+}

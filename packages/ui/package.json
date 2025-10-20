@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "clean": "rimraf dist",
-    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage",
+    "dev": "tsc --watch"
   }
 }

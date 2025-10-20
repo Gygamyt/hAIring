@@ -33,7 +33,9 @@ export const criteriaMatchingPrompt = PromptTemplate.fromTemplate(
 For each criterion from 'hard_skills_required', determine the match level ("full", "partial", "none") by cross-referencing candidate skills, experience, and recruiter feedback.
 Provide a brief, evidence-based comment for each criterion.
 
-Return the output STRICTLY in a JSON array format. The JSON values **must be in Russian**.
+Return the output STRICTLY in a JSON array format.
+All JSON values **must be in Russian**, WITH ONE EXCEPTION:
+The "match" field MUST be one of these exact English values: "full", "partial", or "none".
 
 Candidate Info:
 {candidateInfo}

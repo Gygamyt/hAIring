@@ -114,7 +114,7 @@ export const reportBuilderNode = (state: ReportingGraphState): { report: Report 
 
     const validatedReport = ReportSchema.parse(report);
 
-    logger.log(`${chalk.blue('Builder Finished')} ${chalk.green('for node:')} ${chalk.yellow('ReportBuilderNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`)
+    logger.log(`${chalk.cyan('Builder Finished')} ${chalk.green('for node:')} ${chalk.yellow('ReportBuilderNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`)
 
     return { report: validatedReport };
 };

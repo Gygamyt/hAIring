@@ -39,7 +39,7 @@ import { GradingGraphStateAnnotation } from './grading.state';
  *        START
  *          |
  *        ╱ | ╲
- *      ╱   |  ╲
+ *      ╱   |   ╲
  * grade criteria values
  *   ╲      |      ╱
  *     ╲    |     ╱

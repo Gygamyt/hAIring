@@ -30,6 +30,9 @@ importers:
       '@openapitools/openapi-generator-cli':
         specifier: ^2.25.0
         version: 2.25.0(@types/node@20.19.21)(class-transformer@0.5.1)(class-validator@0.14.2)
+      concurrently:
+        specifier: ^9.2.1
+        version: 9.2.1
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0

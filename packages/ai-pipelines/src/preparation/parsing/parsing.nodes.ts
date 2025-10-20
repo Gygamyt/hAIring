@@ -80,7 +80,7 @@ export const aggregatorNode = (state: PreparationGraphState): { aggregatedResult
         recruiter_feedback: state.parsedFeedback as FeedbackData,
     };
 
-    logger.log(`${chalk.blue('Aggregator Finished')} ${chalk.green('for node:')} ${chalk.yellow('ParsingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`);
+    logger.log(`${chalk.cyan('Aggregator Finished')} ${chalk.green('for node:')} ${chalk.yellow('ParsingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`);
 
     return { aggregatedResult };
 };

@@ -7,6 +7,7 @@
     "@hairing/config-tsconfig": "workspace:^"
   },
   "scripts": {
+    "dev": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rimraf dist",
     "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"

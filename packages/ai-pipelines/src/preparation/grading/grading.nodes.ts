@@ -16,6 +16,7 @@ import type { Assessment } from './grading.state';
 import { AggregatedData } from "../parsing/parsing.state";
 import { Logger } from '@nestjs/common';
 import chalk from "chalk";
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Creates a node to determine the candidate's grade and type.
@@ -24,6 +25,7 @@ import chalk from "chalk";
  */
 export const createGradeAndTypeNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
+        const traceID = uuidv4();
         const aggregatedResult = state.aggregatedResult as AggregatedData;
         if (!aggregatedResult) {
             throw new Error("Input 'aggregatedResult' is missing from the state.");
@@ -38,7 +40,7 @@ export const createGradeAndTypeNode = (llm: ChatGoogleGenerativeAI) =>
             { metadata: { node: 'GradeAndTypeNode' } });
 
         const gradeAndType = GradeAndTypeSchema.parse(result);
-        return { gradeAndType };
+        return { gradeAndType, traceID };
     };
 
 /**
@@ -98,9 +100,9 @@ export const createValuesAssessmentNode = (llm: ChatGoogleGenerativeAI) =>
  */
 export const assessmentAggregatorNode = (state: GradingGraphState): { finalResult: FinalResult } => {
     const logger = new Logger('AggregatorNode');
-    const traceId = (state as any).traceId;
+    const traceID = state.traceID;
 
-    logger.log(`${chalk.blue('Aggregator Started')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`);
+    logger.log(`${chalk.blue('Aggregator Started')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
 
     if (!state.aggregatedResult || !state.gradeAndType || !state.criteriaMatching || !state.valuesAssessment) {
         throw new Error('Assessment aggregator received incomplete data.');
@@ -130,7 +132,7 @@ export const assessmentAggregatorNode = (state: GradingGraphState): { finalResul
         assessment: AssessmentSchema.parse(assessment),
     };
 
-    logger.log(`${chalk.cyan('Aggregator Finished')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`);
+    logger.log(`${chalk.cyan('Aggregator Finished')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
 
     return { finalResult };
 };

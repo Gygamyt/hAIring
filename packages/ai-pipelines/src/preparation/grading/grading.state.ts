@@ -62,6 +62,8 @@ export type Assessment = z.infer<typeof AssessmentSchema>;
  * The LangGraph SCHEMA DEFINITION for the grading graph.
  */
 export const GradingGraphStateAnnotation = Annotation.Root({
+    traceID: Annotation<string>(),
+
     aggregatedResult: Annotation<AggregatedData>(),
 
     gradeAndType: Annotation<GradeAndType>(),

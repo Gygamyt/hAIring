@@ -6,12 +6,13 @@ import { ConfigModule } from '@nestjs/config';
 import * as path from "node:path";
 
 @Module({
-  imports: [
-      PreparationModule,
-      ConfigModule.forRoot({isGlobal: true, envFilePath: path.resolve(process.cwd(), '../../.env'),}),
-  ],
-  controllers: [AppController],
-  providers: [AppService],
+    imports: [
+        PreparationModule,
+        ConfigModule.forRoot({ isGlobal: true, envFilePath: path.resolve(process.cwd(), '../../.env'), }),
+    ],
+    controllers: [AppController],
+    providers: [AppService],
 })
 
-export class AppModule {}
+export class AppModule {
+}

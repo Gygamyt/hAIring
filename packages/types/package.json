@@ -6,7 +6,8 @@
   "types": "./index.ts",
   "scripts": {
     "clean": "rimraf dist",
-    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage",
+    "dev": "tsc --watch"
   },
   "devDependencies": {
     "openapi-typescript": "^7.10.0"
