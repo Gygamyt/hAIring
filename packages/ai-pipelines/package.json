@@ -14,7 +14,7 @@
     "@hairing/config-jest": "workspace:^",
     "@hairing/config-tsconfig": "workspace:^",
     "@types/jest": "^29.5.2",
-    "@nestjs/common": "^10.0.0"
+    "@nestjs/common": "^11.1.6"
   },
   "dependencies": {
     "@langchain/core": "^0.3.78",

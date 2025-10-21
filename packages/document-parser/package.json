@@ -11,7 +11,7 @@
     "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
   },
   "peerDependencies": {
-    "@nestjs/common": "^10.0.0"
+    "@nestjs/common": "^11.1.6"
   },
   "dependencies": {
     "docx": "^9.5.1",

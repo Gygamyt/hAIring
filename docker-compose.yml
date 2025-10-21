@@ -46,6 +46,28 @@ services:
     # depends_on:
     #   - api
 
+  worker:
+    container_name: hairing_worker_dev
+    build:
+      context: .
+      dockerfile: apps/worker/Dev.dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./apps/worker:/app/apps/worker
+      - ./packages:/app/packages
+      - /app/apps/worker/node_modules
+      - /app/packages/ai-pipelines/node_modules
+      - /app/packages/nest-ai/node_modules
+      - /app/packages/google-drive/node_modules
+      - /app/packages/transcription/node_modules
+      - /app/packages/document-parser/node_modules
+      - /app/packages/utils/node_modules
+    networks:
+      - hairing_net
+    depends_on:
+      - redis
+
   redis:
     image: redis:7-alpine
     container_name: hairing_redis_dev

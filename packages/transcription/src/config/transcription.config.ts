@@ -1,18 +1,13 @@
-import { registerAs } from '@nestjs/config';
-import { z } from 'zod';
-import { validateAndParseEnv } from "@hairing/utils/src/config.util";
+import { registerAs } from "@nestjs/config";
 
-const TranscriptionConfigSchema = z.object({
-    ASSEMBLYAI_API_KEY: z.string().min(1, 'ASSEMBLYAI_API_KEY is required.'),
-});
+export const transcriptionConfig = registerAs('transcription', () => {
+    const apiKey = process.env.ASSEMBLYAI_API_KEY;
 
-export type TranscriptionConfig = {
-    assemblyAiApiKey: string;
-};
+    if (!apiKey) {
+        throw new Error('ASSEMBLYAI_API_KEY is not set in .env');
+    }
 
-export default registerAs('transcription', (): TranscriptionConfig => {
-    const env = validateAndParseEnv(TranscriptionConfigSchema, process.env);
     return {
-        assemblyAiApiKey: env.ASSEMBLYAI_API_KEY,
+        apiKey,
     };
 });

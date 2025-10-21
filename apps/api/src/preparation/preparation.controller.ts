@@ -25,6 +25,9 @@ export class PreparationController {
     @ApiConsumes('multipart/form-data')
     @ApiResponse({ status: 201, type: PreparationAnalysisResponseDto })
     @ApiResponse({ status: 400, type: ErrorResponseDto })
+    @ApiResponse({ status: 401, description: 'Unauthorized. Missing or invalid JWT token.' })
+    @ApiResponse({ status: 403, description: 'Forbidden. User does not have permission.' })
+    @ApiResponse({ status: 422, description: 'Unprocessable Entity. The AI pipeline failed to process the data (e.g., validation failed after retries).', type: ErrorResponseDto })
     @ApiResponse({ status: 500, type: ErrorResponseDto })
     @ApiBody({
         schema: {
