@@ -1,11 +1,5 @@
 import { Annotation } from '@langchain/langgraph';
 import type {
-    AggregatedData,
-    CvData,
-    FeedbackData,
-    RequirementsData,
-} from './parsing/parsing.state';
-import type {
     CriteriaMatching,
     GradeAndType,
     ValuesAssessment,
@@ -18,6 +12,7 @@ import type {
     InterviewTopics,
 } from './reporting';
 import { InferGraphState } from "../utils";
+import { AggregatedData, CvData, FeedbackData, RequirementsData } from "./parsing/parsing.types";
 
 /**
  * The LangGraph SCHEMA DEFINITION for the entire candidate pipeline.

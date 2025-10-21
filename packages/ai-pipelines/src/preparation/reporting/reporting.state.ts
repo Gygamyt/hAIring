@@ -24,22 +24,22 @@ export const ReportingGraphStateAnnotation = Annotation.Root({
     interviewTopics: Annotation<InterviewTopics | null>(),
     report: Annotation<Report | null>(),
 
-    // --- NEW: Summary Retry Loop ---
+    // --- Summary Retry Loop ---
     rawSummary: Annotation<string | null>(),
     summaryError: Annotation<string | null>(),
     summaryRetries: Annotation<number | null>(),
 
-    // --- NEW: Recommendations Retry Loop ---
+    // --- Recommendations Retry Loop ---
     rawRecommendations: Annotation<string | null>(),
     recommendationsError: Annotation<string | null>(),
     recommendationsRetries: Annotation<number | null>(),
 
-    // --- NEW: Topics Retry Loop ---
+    // --- Topics Retry Loop ---
     rawTopics: Annotation<string | null>(),
     topicsError: Annotation<string | null>(),
     topicsRetries: Annotation<number | null>(),
 
-    // --- NEW: Global Error ---
+    // --- Global Error ---
     graphError: Annotation<string | null>(),
 });
 

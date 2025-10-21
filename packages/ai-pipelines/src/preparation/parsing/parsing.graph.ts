@@ -25,7 +25,7 @@ import { PreparationGraphStateAnnotation, PreparationGraphState } from "./parsin
 const MAX_RETRIES = 2;
 
 // --------------------------------------------------------------------------------
-// --- УСЛОВНЫЕ РОУТЕРЫ ------------------------------------------------------------
+// --- Conditional Routers --------------------------------------------------------
 // --------------------------------------------------------------------------------
 
 const routerCv = (state: PreparationGraphState) => {
@@ -53,7 +53,7 @@ const routerFeedback = (state: PreparationGraphState) => {
 };
 
 // --------------------------------------------------------------------------------
-// --- ГРАФ -----------------------------------------------------------------------
+// --- Graph Definition -----------------------------------------------------------
 // --------------------------------------------------------------------------------
 
 /**
@@ -63,7 +63,6 @@ const routerFeedback = (state: PreparationGraphState) => {
  * @returns A compiled LangGraph workflow.
  */
 export const createParsingSubgraph = (llm: ChatGoogleGenerativeAI) => {
-    // --- Инициализация узлов ---
     const cvGenerateNode = createCvGenerateNode(llm);
     const fixCvNode = createFixCvNode(llm);
     const requirementsGenerateNode = createRequirementsGenerateNode(llm);
@@ -72,7 +71,6 @@ export const createParsingSubgraph = (llm: ChatGoogleGenerativeAI) => {
     const fixFeedbackNode = createFixFeedbackNode(llm);
 
     const workflow = new StateGraph(PreparationGraphStateAnnotation)
-        // --- Добавляем все 11 узлов ---
         .addNode('cvGenerateNode', cvGenerateNode)
         .addNode('validateCvNode', validateCvNode)
         .addNode('fixCvNode', fixCvNode)
@@ -88,27 +86,27 @@ export const createParsingSubgraph = (llm: ChatGoogleGenerativeAI) => {
         .addNode('aggregator', aggregatorNode)
         .addNode('handleFailureNode', handleFailureNode)
 
-        // --- Вход (Fan-Out) ---
+        // --- Entry Point (Fan-Out) ---
         .addEdge(START, 'cvGenerateNode')
         .addEdge(START, 'requirementsGenerateNode')
         .addEdge(START, 'feedbackGenerateNode')
 
-        // --- Логика Track 1 (CV) ---
+        // --- Track 1 CV ---
         .addEdge('cvGenerateNode', 'validateCvNode')
         .addConditionalEdges('validateCvNode', routerCv)
         .addEdge('fixCvNode', 'validateCvNode') // Loop
 
-        // --- Логика Track 2 (Requirements) ---
+        // --- Track 2 Requirements ---
         .addEdge('requirementsGenerateNode', 'validateRequirementsNode')
         .addConditionalEdges('validateRequirementsNode', routerRequirements)
         .addEdge('fixRequirementsNode', 'validateRequirementsNode') // Loop
 
-        // --- Логика Track 3 (Feedback) ---
+        // --- Track 3 Feedback ---
         .addEdge('feedbackGenerateNode', 'validateFeedbackNode')
         .addConditionalEdges('validateFeedbackNode', routerFeedback)
         .addEdge('fixFeedbackNode', 'validateFeedbackNode') // Loop
 
-        // --- Выход (Fan-In) ---
+        // --- Fan-In ---
         .addEdge('aggregator', END)
         .addEdge('handleFailureNode', END);
 

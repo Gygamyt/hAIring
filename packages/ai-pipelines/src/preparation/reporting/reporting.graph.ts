@@ -63,7 +63,6 @@ const routerTopics = (state: ReportingGraphState) => {
  * @returns A compiled LangGraph workflow.
  */
 export const createReportingSubgraph = (llm: ChatGoogleGenerativeAI) => {
-    // --- Initialize Nodes ---
     const summaryGenerateNode = createSummaryGenerateNode(llm);
     const fixSummaryNode = createFixSummaryNode(llm);
     const recommendationsGenerateNode = createRecommendationsGenerateNode(llm);
@@ -72,7 +71,6 @@ export const createReportingSubgraph = (llm: ChatGoogleGenerativeAI) => {
     const fixInterviewTopicsNode = createFixInterviewTopicsNode(llm);
 
     const workflow = new StateGraph(ReportingGraphStateAnnotation)
-        // --- Add all 11 nodes ---
         .addNode('summaryGenerateNode', summaryGenerateNode)
         .addNode('validateSummaryNode', validateSummaryNode)
         .addNode('fixSummaryNode', fixSummaryNode)

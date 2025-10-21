@@ -1,7 +1,7 @@
-import { AggregatedData } from '../parsing/parsing.state';
 import { Annotation } from "@langchain/langgraph";
 import { InferGraphState } from "../../utils";
 import { CriteriaMatching, FinalResult, GradeAndType, ValuesAssessment } from "./grading.types";
+import { AggregatedData } from "../parsing/parsing.types";
 
 
 /**

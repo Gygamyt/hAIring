@@ -1,18 +1,18 @@
 import {
     InterviewTopics,
-    InterviewTopicsSchema, // <-- Import from .types
+    InterviewTopicsSchema,
     Recommendations,
-    RecommendationsSchema, // <-- Import from .types
+    RecommendationsSchema,
     Report,
-    ReportSchema, // <-- Import from .types
+    ReportSchema,
     Summary,
-    SummarySchema // <-- Import from .types
-} from "./reporting.types"; // <-- THE FIX: Import from .types
+    SummarySchema
+} from "./reporting.types";
 import {
     ReportingGraphState,
-} from "./reporting.state"; // <-- Import state separately
+} from "./reporting.state";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { FinalResult } from "../grading"; // <-- This should point to grading.types.ts
+import { FinalResult } from "../grading";
 import {
     interviewTopicsPrompt,
     recommendationsPrompt,
@@ -80,7 +80,6 @@ export const validateSummaryNode = (
     const traceId = state.traceId as string;
     logger.log(`${chalk.blue('Node Validating')} ${chalk.green('for node:')} ${chalk.yellow('validateSummaryNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceId}`)}`);
 
-    // Если ошибка пришла из GenerateNode, просто прокидываем ее
     if (state.summaryError && !state.rawSummary) {
         logger.warn(`${chalk.yellow('Node Validated (Error)')} ${chalk.green('for node:')} ${chalk.yellow('validateSummaryNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceId}`)} ${chalk.red('Error:')} ${state.summaryError}`);
         return {
@@ -256,7 +255,6 @@ export const validateInterviewTopicsNode = (
     const traceId = state.traceId as string;
     logger.log(`${chalk.blue('Node Validating')} ${chalk.green('for node:')} ${chalk.yellow('validateInterviewTopicsNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceId}`)}`);
 
-    // Если ошибка пришла из GenerateNode
     if (state.topicsError && !state.rawTopics) {
         logger.warn(`${chalk.yellow('Node Validated (Error)')} ${chalk.green('for node:')} ${chalk.yellow('validateInterviewTopicsNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceId}`)} ${chalk.red('Error:')} ${state.topicsError}`);
         return {
@@ -302,15 +300,14 @@ export const createFixInterviewTopicsNode = (llm: ChatGoogleGenerativeAI) =>
 // --------------------------------------------------------------------------------
 
 /**
- * A synchronous node that builds the final report. (UPDATED)
+ * A synchronous node that builds the final report.
  */
 export const reportBuilderNode = (state: ReportingGraphState): { report: Report | null; graphError: string | null } => {
-    const logger = new Logger('ReportBuilderNode'); // Logger initialized inside
+    const logger = new Logger('ReportBuilderNode');
     const traceId = state.traceId as string;
 
     logger.log(`${chalk.blue('Builder Started')} ${chalk.green('for node:')} ${chalk.yellow('ReportBuilderNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceId}`)}`)
 
-    // Use casting to help TypeScript
     const finalResult = state.finalResult as FinalResult | null;
     const summary = state.summary as Summary | null;
     const recommendations = state.recommendations as Recommendations | null;
@@ -325,7 +322,6 @@ export const reportBuilderNode = (state: ReportingGraphState): { report: Report 
         ].filter(Boolean).join(', ');
 
         logger.error(`Report builder failed: missing data for [${missing}]. TraceID: ${traceId}`);
-        // Return error in state, DO NOT THROW
         return {
             report: null,
             graphError: `Report builder failed: missing data for [${missing}].`
@@ -355,7 +351,7 @@ export const reportBuilderNode = (state: ReportingGraphState): { report: Report 
  * NEW: A synchronous node that handles terminal failures.
  */
 export const handleFailureNode = (state: ReportingGraphState): { graphError: string } => {
-    const logger = new Logger('ReportingFailure'); // Logger initialized inside
+    const logger = new Logger('ReportingFailure');
     const traceId = state.traceId as string;
     let finalError = "Reporting pipeline failed after all retries.";
 
