@@ -102,148 +102,214 @@ export class ResultsService {
         }
     }
 
-    /**
-     * @deprecated THIS IS A TEMPORARY IMPLEMENTATION using file downloads.
-     * Should be replaced with a pure stream-based ffmpeg->WebSocket pipeline.
-     * STEP 2: Download video, extract audio to temp file, transcribe audio file stream.
-     * On success, creates Job 3 (Run AI).
-     */
+
     async runTranscriptionStep(job: Job): Promise<any> {
         const { parentJobId, payload } = job.data;
-        this.logger.warn(`[Job ${parentJobId}] RUNNING TEMPORARY FILE-BASED TRANSCRIPTION STEP.`);
-        const { video_link, matrixText, valuesText, portraitText, requirementsText, cvText, cvFileName } = payload;
+        this.logger.warn(`[Job ${parentJobId}] RUNNING FILE-BASED TRANSCRIPTION STEP.`);
 
+        const { video_link } = payload;
         let tempVideoPath: string | null = null;
         let tempAudioPath: string | null = null;
-        let transcriptionSession: Awaited<ReturnType<TranscriptionService['startTranscriptionSession']>> | null = null;
 
         try {
-            // --- SECTION: File Downloader (Temporary) ---
-            this.logger.log(`[Job ${parentJobId}] Downloading video file temporarily...`);
+            // Download video
+            this.logger.log(`[Job ${parentJobId}] Downloading video...`);
             tempVideoPath = await this.googleDriveService.downloadFileToTemp(video_link);
-            this.logger.log(`[Job ${parentJobId}] Video downloaded to: ${tempVideoPath}`);
-            // --- END SECTION ---
+            this.logger.log(`[Job ${parentJobId}] Video downloaded: ${tempVideoPath}`);
 
-            // --- SECTION: Audio Extractor (File-based, Temporary) ---
-            tempAudioPath = path.join(os.tmpdir(), `audio-${parentJobId}-${Date.now()}.raw`); // Use .raw or .wav
+            // Extract audio to WAV
+            tempAudioPath = path.join(os.tmpdir(), `audio-${parentJobId}-${Date.now()}.wav`);
             this.logger.log(`[Job ${parentJobId}] Extracting audio to: ${tempAudioPath}`);
-
             await new Promise<void>((resolve, reject) => {
                 ffmpeg(tempVideoPath!)
                     .noVideo()
                     .audioChannels(1)
                     .audioFrequency(16000)
-                    .outputFormat('s16le')
-                    .on('start', (cmd) => this.logger.log(`[Job ${parentJobId}] ffmpeg started: ${cmd}`))
-                    .on('stderr', (line) => this.logger.warn(`[Job ${parentJobId}] ${chalk.yellow('[ffmpeg stderr]')}: ${line.trim()}`))
-                    .on('error', (err, stdout, stderr) => {
-                        this.logger.error(`[Job ${parentJobId}] ffmpeg audio extraction error: ${err.message}`);
-                        this.logger.error(`[Job ${parentJobId}] ffmpeg stderr on error:\n${stderr}`);
-                        reject(new Error(`ffmpeg audio extraction failed: ${err.message}`));
+                    .format('wav')
+                    .on('start', cmd => this.logger.log(`[Job ${parentJobId}] ffmpeg: ${cmd}`))
+                    .on('error', (err, _, stderr) => {
+                        this.logger.error(`[Job ${parentJobId}] ffmpeg error: ${err.message}`);
+                        this.logger.error(stderr);
+                        reject(err);
                     })
                     .on('end', () => {
-                        this.logger.log(`[Job ${parentJobId}] ffmpeg finished extracting audio.`);
+                        this.logger.log(`[Job ${parentJobId}] Audio extraction complete.`);
                         resolve();
                     })
                     .save(tempAudioPath!);
             });
-            // --- END SECTION ---
 
-            // --- SECTION: Transcription (from File Stream, Temporary) ---
-            this.logger.log(`[Job ${parentJobId}] Creating stream from temp audio file: ${tempAudioPath}`);
-            const audioFileStream = fs.createReadStream(tempAudioPath!, {
-                highWaterMark: READ_CHUNK_SIZE_BYTES // Read chunks <= 32KB
+            this.logger.log(`[Job ${parentJobId}] Transcribing audio with Russian language setting...`);
+            const result = await this.transcriptionService.transcribeFile(tempAudioPath, {
+                languageDetection: true,
+                punctuate: true,
+                formatText: true,
             });
 
-            transcriptionSession = await this.transcriptionService.startTranscriptionSession();
-            this.logger.log(`[Job ${parentJobId}] Transcription session started.`);
-
-            // --- Throttling Logic ---
-            let isPaused = false; // Flag to manage pausing/resuming
-
-            audioFileStream.on('data', (chunk: Buffer | string) => {
-                if (!(chunk instanceof Buffer) || chunk.length === 0) {
-                    this.logger.warn(`[Job ${parentJobId}] Received invalid chunk, skipping.`);
-                    return;
-                }
-
-                // Pause the stream immediately after receiving data
-                if (!isPaused) {
-                    audioFileStream!.pause(); // Use non-null assertion
-                    isPaused = true;
-                    // this.logger.log(`[Job ${parentJobId}] Paused stream after reading chunk.`);
-                }
-
-                // Send the current chunk
-                // this.logger.log(`[Job ${parentJobId}] Sending audio chunk (${chunk.length} bytes)...`);
-                transcriptionSession!.sendAudioChunk(chunk);
-
-                // Calculate chunk duration in milliseconds
-                const chunkDurationMs = (chunk.length / BYTES_PER_SECOND) * 1000;
-
-                // Set a timeout to resume the stream after the chunk's duration
-                setTimeout(() => {
-                    if (audioFileStream && !audioFileStream.destroyed && isPaused) {
-                        // this.logger.log(`[Job ${parentJobId}] Resuming stream after ${chunkDurationMs.toFixed(0)}ms wait.`);
-                        audioFileStream.resume();
-                        isPaused = false;
-                    }
-                }, chunkDurationMs); // Wait for the duration of the audio chunk
-            });
-            // --- End Throttling Logic ---
-
-            audioFileStream.on('end', async () => {
-                this.logger.log(`[Job ${parentJobId}] Temp audio file stream ended.`);
-                if (transcriptionSession) {
-                    await transcriptionSession.finishStreaming();
-                    this.logger.log(`[Job ${parentJobId}] Signaled end of stream to AssemblyAI.`);
-                }
-            });
-            audioFileStream.on('error', (err) => {
-                this.logger.error(`[Job ${parentJobId}] Error reading temp audio file stream: ${err.message}`);
-                if (transcriptionSession) {
-                    (transcriptionSession.getCompletionPromise() as any).reject?.(new Error(`Audio file stream error: ${err.message}`));
-                    transcriptionSession.finishStreaming().catch(()=>{});
-                }
-            });
-
-            // Start piping
-            this.logger.log(`[Job ${parentJobId}] Piping temp audio file stream to transcription session...`);
-            // Piping will trigger 'data' and 'end'/'error' events above
-
-            // Wait for completion
-            this.logger.log(`[Job ${parentJobId}] Waiting for transcription completion promise...`);
-            const transcriptionText = await transcriptionSession.getCompletionPromise();
-            // --- END SECTION ---
 
 
-            if (transcriptionText === undefined || transcriptionText === null) {
-                throw new Error('Transcription completed but returned undefined/null text.');
-            }
-            this.logger.log(`[Job ${parentJobId}] Transcription complete (${transcriptionText.length} chars).`);
-
-            // Enqueue Next Job
-            const nextJobPayload = { /* ... payload ... */ };
-            await this.addNextJob(parentJobId, 'job-3-run-ai', nextJobPayload);
-            this.logger.log(`[Job ${parentJobId}] Step 2 complete. Enqueued job-3-run-ai.`);
-
+            this.logger.log(`[Job ${parentJobId}] Transcription complete (${result.text.length} chars).`);
             await this.analysisQueue.updateJobProgress(parentJobId, { step: 'transcribed' });
-            return { transcription: 'success' };
 
+            // Enqueue next job
+            await this.addNextJob(parentJobId, 'job-3-run-ai', { transcription: result.text });
+            this.logger.log(`[Job ${parentJobId}] Enqueued job-3-run-ai.`);
+
+            return { transcription: 'success' };
         } catch (error: any) {
-            this.logger.error(`[Job ${parentJobId}] Step 2 (TEMPORARY FILE METHOD) failed: ${error.message}`, error.stack);
-            if (transcriptionSession) {
-                await transcriptionSession.finishStreaming().catch(e => this.logger.error(`Error closing WS on failure: ${e.message}`));
-            }
+            this.logger.error(`[Job ${parentJobId}] Transcription step failed: ${error.message}`);
             await this.analysisQueue.updateJobProgress(parentJobId, { step: 'failed' });
             throw error;
         } finally {
-            // Cleanup Temporary Files
-            this.logger.log(`[Job ${parentJobId}] Cleaning up temporary files (if any)...`);
-            this.cleanupTempFile(tempVideoPath, parentJobId, 'video');
-            this.cleanupTempFile(tempAudioPath, parentJobId, 'audio');
+            this.logger.log(`[Job ${parentJobId}] Cleaning up temp files.`);
+            if (tempVideoPath) await fs.promises.unlink(tempVideoPath).catch(() => {});
+            if (tempAudioPath) await fs.promises.unlink(tempAudioPath).catch(() => {});
         }
     }
+
+
+    // /**
+    //  * @deprecated THIS IS A TEMPORARY IMPLEMENTATION using file downloads.
+    //  * Should be replaced with a pure stream-based ffmpeg->WebSocket pipeline.
+    //  * STEP 2: Download video, extract audio to temp file, transcribe audio file stream.
+    //  * On success, creates Job 3 (Run AI).
+    //  */
+    // async runTranscriptionStep(job: Job): Promise<any> {
+    //     const { parentJobId, payload } = job.data;
+    //     this.logger.warn(`[Job ${parentJobId}] RUNNING TEMPORARY FILE-BASED TRANSCRIPTION STEP.`);
+    //     const { video_link, matrixText, valuesText, portraitText, requirementsText, cvText, cvFileName } = payload;
+    //
+    //     let tempVideoPath: string | null = null;
+    //     let tempAudioPath: string | null = null;
+    //     let transcriptionSession: Awaited<ReturnType<TranscriptionService['startTranscriptionSession']>> | null = null;
+    //
+    //     try {
+    //         // --- SECTION: File Downloader (Temporary) ---
+    //         this.logger.log(`[Job ${parentJobId}] Downloading video file temporarily...`);
+    //         tempVideoPath = await this.googleDriveService.downloadFileToTemp(video_link);
+    //         this.logger.log(`[Job ${parentJobId}] Video downloaded to: ${tempVideoPath}`);
+    //         // --- END SECTION ---
+    //
+    //         // --- SECTION: Audio Extractor (File-based, Temporary) ---
+    //         tempAudioPath = path.join(os.tmpdir(), `audio-${parentJobId}-${Date.now()}.raw`); // Use .raw or .wav
+    //         this.logger.log(`[Job ${parentJobId}] Extracting audio to: ${tempAudioPath}`);
+    //
+    //         await new Promise<void>((resolve, reject) => {
+    //             ffmpeg(tempVideoPath!)
+    //                 .noVideo()
+    //                 .audioChannels(1)
+    //                 .audioFrequency(16000)
+    //                 .outputFormat('s16le')
+    //                 .on('start', (cmd) => this.logger.log(`[Job ${parentJobId}] ffmpeg started: ${cmd}`))
+    //                 .on('stderr', (line) => this.logger.warn(`[Job ${parentJobId}] ${chalk.yellow('[ffmpeg stderr]')}: ${line.trim()}`))
+    //                 .on('error', (err, stdout, stderr) => {
+    //                     this.logger.error(`[Job ${parentJobId}] ffmpeg audio extraction error: ${err.message}`);
+    //                     this.logger.error(`[Job ${parentJobId}] ffmpeg stderr on error:\n${stderr}`);
+    //                     reject(new Error(`ffmpeg audio extraction failed: ${err.message}`));
+    //                 })
+    //                 .on('end', () => {
+    //                     this.logger.log(`[Job ${parentJobId}] ffmpeg finished extracting audio.`);
+    //                     resolve();
+    //                 })
+    //                 .save(tempAudioPath!);
+    //         });
+    //         // --- END SECTION ---
+    //
+    //         // --- SECTION: Transcription (from File Stream, Temporary) ---
+    //         this.logger.log(`[Job ${parentJobId}] Creating stream from temp audio file: ${tempAudioPath}`);
+    //         const audioFileStream = fs.createReadStream(tempAudioPath!, {
+    //             highWaterMark: READ_CHUNK_SIZE_BYTES // Read chunks <= 32KB
+    //         });
+    //
+    //         transcriptionSession = await this.transcriptionService.startTranscriptionSession();
+    //         this.logger.log(`[Job ${parentJobId}] Transcription session started.`);
+    //
+    //         // --- Throttling Logic ---
+    //         let isPaused = false; // Flag to manage pausing/resuming
+    //
+    //         audioFileStream.on('data', (chunk: Buffer | string) => {
+    //             if (!(chunk instanceof Buffer) || chunk.length === 0) {
+    //                 this.logger.warn(`[Job ${parentJobId}] Received invalid chunk, skipping.`);
+    //                 return;
+    //             }
+    //
+    //             // Pause the stream immediately after receiving data
+    //             if (!isPaused) {
+    //                 audioFileStream!.pause(); // Use non-null assertion
+    //                 isPaused = true;
+    //                 // this.logger.log(`[Job ${parentJobId}] Paused stream after reading chunk.`);
+    //             }
+    //
+    //             // Send the current chunk
+    //             // this.logger.log(`[Job ${parentJobId}] Sending audio chunk (${chunk.length} bytes)...`);
+    //             transcriptionSession!.sendAudioChunk(chunk);
+    //
+    //             // Calculate chunk duration in milliseconds
+    //             const chunkDurationMs = (chunk.length / BYTES_PER_SECOND) * 1000;
+    //
+    //             // Set a timeout to resume the stream after the chunk's duration
+    //             setTimeout(() => {
+    //                 if (audioFileStream && !audioFileStream.destroyed && isPaused) {
+    //                     // this.logger.log(`[Job ${parentJobId}] Resuming stream after ${chunkDurationMs.toFixed(0)}ms wait.`);
+    //                     audioFileStream.resume();
+    //                     isPaused = false;
+    //                 }
+    //             }, chunkDurationMs); // Wait for the duration of the audio chunk
+    //         });
+    //         // --- End Throttling Logic ---
+    //
+    //         audioFileStream.on('end', async () => {
+    //             this.logger.log(`[Job ${parentJobId}] Temp audio file stream ended.`);
+    //             if (transcriptionSession) {
+    //                 await transcriptionSession.finishStreaming();
+    //                 this.logger.log(`[Job ${parentJobId}] Signaled end of stream to AssemblyAI.`);
+    //             }
+    //         });
+    //         audioFileStream.on('error', (err) => {
+    //             this.logger.error(`[Job ${parentJobId}] Error reading temp audio file stream: ${err.message}`);
+    //             if (transcriptionSession) {
+    //                 (transcriptionSession.getCompletionPromise() as any).reject?.(new Error(`Audio file stream error: ${err.message}`));
+    //                 transcriptionSession.finishStreaming().catch(()=>{});
+    //             }
+    //         });
+    //
+    //         // Start piping
+    //         this.logger.log(`[Job ${parentJobId}] Piping temp audio file stream to transcription session...`);
+    //         // Piping will trigger 'data' and 'end'/'error' events above
+    //
+    //         // Wait for completion
+    //         this.logger.log(`[Job ${parentJobId}] Waiting for transcription completion promise...`);
+    //         const transcriptionText = await transcriptionSession.getCompletionPromise();
+    //         // --- END SECTION ---
+    //
+    //
+    //         if (transcriptionText === undefined || transcriptionText === null) {
+    //             throw new Error('Transcription completed but returned undefined/null text.');
+    //         }
+    //         this.logger.log(`[Job ${parentJobId}] Transcription complete (${transcriptionText.length} chars).`);
+    //
+    //         // Enqueue Next Job
+    //         const nextJobPayload = { /* ... payload ... */ };
+    //         await this.addNextJob(parentJobId, 'job-3-run-ai', nextJobPayload);
+    //         this.logger.log(`[Job ${parentJobId}] Step 2 complete. Enqueued job-3-run-ai.`);
+    //
+    //         await this.analysisQueue.updateJobProgress(parentJobId, { step: 'transcribed' });
+    //         return { transcription: 'success' };
+    //
+    //     } catch (error: any) {
+    //         this.logger.error(`[Job ${parentJobId}] Step 2 (TEMPORARY FILE METHOD) failed: ${error.message}`, error.stack);
+    //         if (transcriptionSession) {
+    //             await transcriptionSession.finishStreaming().catch(e => this.logger.error(`Error closing WS on failure: ${e.message}`));
+    //         }
+    //         await this.analysisQueue.updateJobProgress(parentJobId, { step: 'failed' });
+    //         throw error;
+    //     } finally {
+    //         // Cleanup Temporary Files
+    //         this.logger.log(`[Job ${parentJobId}] Cleaning up temporary files (if any)...`);
+    //         this.cleanupTempFile(tempVideoPath, parentJobId, 'video');
+    //         this.cleanupTempFile(tempAudioPath, parentJobId, 'audio');
+    //     }
+    // }
 
     /**
      * STEP 2: Get video stream from GDrive and transcribe it.

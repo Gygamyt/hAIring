@@ -1,6 +1,5 @@
-// packages/transcription/src/realtime/realtime-event.handler.ts
 import { Injectable, Logger, Scope } from '@nestjs/common';
-import { RealtimeTranscript, StreamingTranscriber, TurnEvent, RealtimeTranscriptType, StreamingWord } from 'assemblyai';
+import { StreamingTranscriber, TurnEvent, StreamingWord } from 'assemblyai';
 import chalk from 'chalk';
 import { IRealtimeEventHandler } from './realtime.types';
 

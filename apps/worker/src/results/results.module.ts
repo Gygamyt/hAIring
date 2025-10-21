@@ -9,8 +9,6 @@ import { AudioExtractorModule } from "../audio-extractor/audio-extractor.module"
 
 @Module({
     imports: [
-        // Register the queue this worker will process.
-        // The name 'analysis-workflow' MUST match the name in apps/api.
         BullModule.registerQueue({
             name: 'analysis-workflow',
         }),
@@ -23,8 +21,8 @@ import { AudioExtractorModule } from "../audio-extractor/audio-extractor.module"
         // AiPipelinesModule,
     ],
     providers: [
-        ResultsProcessor, // The class that listens for new jobs
-        ResultsService,   // The class that contains the business logic
+        ResultsProcessor,
+        ResultsService,
     ],
 })
 

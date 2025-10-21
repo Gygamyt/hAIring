@@ -4,7 +4,7 @@ import { ResultsService } from './results.service';
 import { Logger } from '@nestjs/common';
 import chalk from 'chalk';
 
-@Processor('analysis-workflow') // Must match the queue name from ResultsModule
+@Processor('analysis-workflow')
 export class ResultsProcessor extends WorkerHost {
     private readonly logger = new Logger(ResultsProcessor.name);
 
@@ -16,7 +16,7 @@ export class ResultsProcessor extends WorkerHost {
      * This method is called for every job in the 'analysis-workflow' queue.
      * It routes the job to the correct service method based on its name.
      */
-    async process(job: Job<any, any, string>): Promise<any> {
+    async process(job: Job): Promise<any> {
         this.logger.log(
             `Processing job ${chalk.yellow(job.name)} (ID: ${chalk.cyan(job.id)})`,
         );

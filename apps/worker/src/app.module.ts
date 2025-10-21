@@ -7,9 +7,8 @@ import { ResultsModule } from './results/results.module';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            envFilePath: '.env', // Assumes .env is in the monorepo root
+            envFilePath: '.env',
         }),
-        // Configure the global BullMQ connection to Redis
         BullModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => ({
@@ -20,8 +19,8 @@ import { ResultsModule } from './results/results.module';
             }),
             inject: [ConfigService],
         }),
-        // Import the module that contains our worker's logic
         ResultsModule,
     ],
 })
+
 export class AppModule {}

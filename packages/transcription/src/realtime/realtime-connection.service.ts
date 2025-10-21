@@ -1,11 +1,10 @@
-// packages/transcription/src/realtime/realtime-connection.service.ts
 import { Inject, Injectable, Logger, Scope } from '@nestjs/common';
 import { AssemblyAI, StreamingTranscriber, BeginEvent } from 'assemblyai';
 import chalk from 'chalk';
 import { IRealtimeConnectionService } from './realtime.types';
 import { ASSEMBLYAI_CLIENT } from "../constants";
 
-const CONNECTION_TIMEOUT_MS = 15000; // 15 seconds
+const CONNECTION_TIMEOUT_MS = 15000;
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class RealtimeConnectionService implements IRealtimeConnectionService {
@@ -37,7 +36,6 @@ export class RealtimeConnectionService implements IRealtimeConnectionService {
         this.logger.log(`Attempting connection via client.streaming.transcriber (Timeout: ${CONNECTION_TIMEOUT_MS / 1000}s)...`);
 
         try {
-            // Instantiate the transcriber
             this.transcriber = this.client.streaming.transcriber({
                 sampleRate: 16000
             });
@@ -47,18 +45,15 @@ export class RealtimeConnectionService implements IRealtimeConnectionService {
         }
 
         this.connectionPromise = new Promise((resolve, reject) => {
-            // Centralized rejection handler to ensure cleanup
             const handleRejection = (error: Error) => {
                 if (this.connectionTimeoutId) clearTimeout(this.connectionTimeoutId);
                 this.connectionTimeoutId = null;
-                // Only reject if the promise hasn't already resolved/rejected
-                if (this.connectionPromise) { // Check if promise still pending
+                if (this.connectionPromise) {
                     reject(error);
                 }
-                this.cleanupConnection(); // Ensure cleanup happens
+                this.cleanupConnection();
             };
 
-            // Setup connection timeout
             this.connectionTimeoutId = setTimeout(() => {
                 this.logger.error(`${chalk.red('[Streaming WebSocket CONNECT TIMEOUT]')} after ${CONNECTION_TIMEOUT_MS / 1000}s.`);
                 handleRejection(new Error(`Streaming WebSocket connection timed out after ${CONNECTION_TIMEOUT_MS / 1000}s.`));
@@ -69,47 +64,40 @@ export class RealtimeConnectionService implements IRealtimeConnectionService {
                 if (this.connectionTimeoutId) clearTimeout(this.connectionTimeoutId);
                 this.connectionTimeoutId = null;
 
-                // Check if connection already handled (e.g., by timeout/error)
                 if (this.isConnected || !this.connectionPromise) {
                     this.logger.warn(`'open' event received, but connection state is unexpected (isConnected: ${this.isConnected}). Ignoring.`);
                     return;
                 }
 
                 this.isConnected = true;
-                // Correct property is session_id based on SDK
+
                 this.currentSessionId = beginEvent.id;
                 this.logger.log(`${chalk.greenBright('[Streaming WebSocket OPEN CONFIRMED]')} Session ID: ${this.currentSessionId}`);
                 resolve({ sessionId: this.currentSessionId });
-                // Do not clear connectionPromise here, let subsequent calls check isConnected
             });
 
             this.transcriber!.on('error', (error: Error) => {
-                // This handles errors *during* or *after* connection attempt
                 this.logger.error(`${chalk.red(this.isConnected ? '[Streaming WebSocket RUNTIME ERROR]' : '[Streaming WebSocket CONNECT ERROR]')}`, error.message);
                 handleRejection(new Error(`Streaming WebSocket error: ${error.message}`));
             });
 
             this.transcriber!.on('close', (code: number, reason: string) => {
-                // Handles unexpected close *before* 'open' or expected close *after* operation
-                if (!this.isConnected) { // Closed before 'open' was received
+                if (!this.isConnected) {
                     this.logger.error(`${chalk.red('[Streaming WebSocket CLOSED BEFORE OPEN]')} Code: ${code}, Reason: ${reason}`);
                     handleRejection(new Error(`Streaming WebSocket closed before opening. Code: ${code}, Reason: ${reason}`));
                 } else {
-                    // If closed *after* connection, log it but let EventHandler manage promise resolution/rejection
                     this.logger.log(`${chalk.yellow('[Streaming WebSocket CLOSED NORMALLY/RUNTIME]')} Code: ${code}, Reason: ${reason}`);
-                    // Ensure state is cleaned up if EventHandler doesn't handle it (e.g., abrupt close)
                     this.cleanupConnection();
                 }
             });
         });
 
-        // Initiate the connection after setting up listeners
         try {
             this.logger.log('Calling transcriber.connect()...');
             this.transcriber.connect();
         } catch (connectError: any) {
             this.logger.error(`Error calling transcriber.connect(): ${connectError.message}`);
-            this.cleanupConnection(); // Clean up if connect call itself fails
+            this.cleanupConnection();
             return Promise.reject(new Error(`Error initiating connection: ${connectError.message}`));
         }
 
