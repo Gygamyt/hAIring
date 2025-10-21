@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AggregatedDataSchema } from "../parsing/parsing.state";
+import { AggregatedDataSchema } from "../parsing/parsing.types";
 
 /**
  * Schema for the output of the grade and type determination node.

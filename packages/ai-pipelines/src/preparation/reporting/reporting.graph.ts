@@ -1,40 +1,116 @@
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import {
-    createSummaryNode,
-    createRecommendationsNode,
-    createInterviewTopicsNode,
+    // --- Track 1 ---
+    createSummaryGenerateNode,
+    validateSummaryNode,
+    createFixSummaryNode,
+    // --- Track 2 ---
+    createRecommendationsGenerateNode,
+    validateRecommendationsNode,
+    createFixRecommendationsNode,
+    // --- Track 3 ---
+    createInterviewTopicsGenerateNode,
+    validateInterviewTopicsNode,
+    createFixInterviewTopicsNode,
+    // --- Join/End ---
     reportBuilderNode,
+    handleFailureNode
 } from './reporting.nodes';
-import { ReportingGraphStateAnnotation } from "./reporting.state";
+import { ReportingGraphStateAnnotation, ReportingGraphState } from "./reporting.state";
 
 /**
- * Creates a LangGraph subgraph for generating a final candidate report.
+ * Max number of retries for correction.
+ */
+const MAX_RETRIES = 2;
+
+// --------------------------------------------------------------------------------
+// --- Conditional Routers --------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+const routerSummary = (state: ReportingGraphState) => {
+    const error = (state as any).summaryError;
+    const retries = (state as any).summaryRetries;
+    if (!error) return 'reportBuilderNode';
+    if (retries >= MAX_RETRIES) return 'handleFailureNode';
+    return 'fixSummaryNode';
+};
+
+const routerRecommendations = (state: ReportingGraphState) => {
+    const error = (state as any).recommendationsError;
+    const retries = (state as any).recommendationsRetries;
+    if (!error) return 'reportBuilderNode';
+    if (retries >= MAX_RETRIES) return 'handleFailureNode';
+    return 'fixRecommendationsNode';
+};
+
+const routerTopics = (state: ReportingGraphState) => {
+    const error = (state as any).topicsError;
+    const retries = (state as any).topicsRetries;
+    if (!error) return 'reportBuilderNode';
+    if (retries >= MAX_RETRIES) return 'handleFailureNode';
+    return 'fixInterviewTopicsNode';
+};
+
+// --------------------------------------------------------------------------------
+// --- Graph Definition -----------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+/**
+ * Creates a robust LangGraph subgraph for generating a final candidate report.
  *
- * This function implements a fan-out/fan-in pattern where three parallel nodes
- * generate different parts of the report's conclusion. A final builder node
- * then assembles these parts into a complete, structured report.
- *
- * @param llm - The ChatGoogleGenerativeAI model instance used by the generation nodes.
- * @returns A compiled LangGraph workflow ready for execution.
+ * @param llm - The ChatGoogleGenerativeAI model instance.
+ * @returns A compiled LangGraph workflow.
  */
 export const createReportingSubgraph = (llm: ChatGoogleGenerativeAI) => {
-    const summaryNode = createSummaryNode(llm);
-    const recommendationsNode = createRecommendationsNode(llm);
-    const interviewTopicsNode = createInterviewTopicsNode(llm);
+    // --- Initialize Nodes ---
+    const summaryGenerateNode = createSummaryGenerateNode(llm);
+    const fixSummaryNode = createFixSummaryNode(llm);
+    const recommendationsGenerateNode = createRecommendationsGenerateNode(llm);
+    const fixRecommendationsNode = createFixRecommendationsNode(llm);
+    const interviewTopicsGenerateNode = createInterviewTopicsGenerateNode(llm);
+    const fixInterviewTopicsNode = createFixInterviewTopicsNode(llm);
 
     const workflow = new StateGraph(ReportingGraphStateAnnotation)
-        .addNode('summaryNode', summaryNode)
-        .addNode('recommendationsNode', recommendationsNode)
-        .addNode('interviewTopicsNode', interviewTopicsNode)
+        // --- Add all 11 nodes ---
+        .addNode('summaryGenerateNode', summaryGenerateNode)
+        .addNode('validateSummaryNode', validateSummaryNode)
+        .addNode('fixSummaryNode', fixSummaryNode)
+
+        .addNode('recommendationsGenerateNode', recommendationsGenerateNode)
+        .addNode('validateRecommendationsNode', validateRecommendationsNode)
+        .addNode('fixRecommendationsNode', fixRecommendationsNode)
+
+        .addNode('interviewTopicsGenerateNode', interviewTopicsGenerateNode)
+        .addNode('validateInterviewTopicsNode', validateInterviewTopicsNode)
+        .addNode('fixInterviewTopicsNode', fixInterviewTopicsNode)
+
         .addNode('reportBuilderNode', reportBuilderNode)
-        .addEdge(START, 'summaryNode')
-        .addEdge(START, 'recommendationsNode')
-        .addEdge(START, 'interviewTopicsNode')
-        .addEdge(
-            ['summaryNode', 'recommendationsNode', 'interviewTopicsNode'],
-            'reportBuilderNode'
-        )
-        .addEdge('reportBuilderNode', END);
+        .addNode('handleFailureNode', handleFailureNode)
+
+        // --- Entry Point (Fan-Out) ---
+        .addEdge(START, 'summaryGenerateNode')
+        .addEdge(START, 'recommendationsGenerateNode')
+        .addEdge(START, 'interviewTopicsGenerateNode')
+
+        // --- Track 1 (Summary) Logic ---
+        .addEdge('summaryGenerateNode', 'validateSummaryNode')
+        .addConditionalEdges('validateSummaryNode', routerSummary)
+        .addEdge('fixSummaryNode', 'validateSummaryNode') // Loop
+
+        // --- Track 2 (Recommendations) Logic ---
+        .addEdge('recommendationsGenerateNode', 'validateRecommendationsNode')
+        .addConditionalEdges('validateRecommendationsNode', routerRecommendations)
+        .addEdge('fixRecommendationsNode', 'validateRecommendationsNode') // Loop
+
+        // --- Track 3 (Topics) Logic ---
+        .addEdge('interviewTopicsGenerateNode', 'validateInterviewTopicsNode')
+        .addConditionalEdges('validateInterviewTopicsNode', routerTopics)
+        .addEdge('fixInterviewTopicsNode', 'validateInterviewTopicsNode') // Loop
+
+        // --- Exit Points (Fan-In) ---
+        .addEdge('reportBuilderNode', END)
+        .addEdge('handleFailureNode', END);
+
     return workflow.compile();
 };

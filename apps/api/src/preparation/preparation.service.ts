@@ -78,8 +78,6 @@ export class PreparationService {
                 );
             }
 
-            this.logger.log('AI pipeline executed successfully.');
-
             if (!finalState?.report) {
                 this.logger.error('AI pipeline finished successfully, but did not return the final report.');
                 throw new Error('AI pipeline did not return the final report.');

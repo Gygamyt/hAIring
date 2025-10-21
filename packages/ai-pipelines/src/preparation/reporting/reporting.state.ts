@@ -1,63 +1,46 @@
-import z from "zod";
 import { Annotation } from "@langchain/langgraph";
 import { FinalResult } from "../grading";
 import { InferGraphState } from "../../utils";
+import type {
+    Summary,
+    Recommendations,
+    InterviewTopics,
+    Report
+} from "./reporting.types";
 
-/**
- * Schema for the summary node's output.
- */
-export const SummarySchema = z.object({
-    summary: z.string(),
-});
-
-/**
- * Schema for the recommendations node's output.
- */
-export const RecommendationsSchema = z.object({
-    recommendations: z.string(),
-});
-
-/**
- * Schema for the interview topics node's output.
- */
-export const InterviewTopicsSchema = z.object({
-    interview_topics: z.array(z.string()),
-});
-
-/**
- * Schema for the final, comprehensive report object.
- */
-export const ReportSchema = z.object({
-    first_name: z.string(),
-    last_name: z.string(),
-    matching_table: z.array(z.object({
-        criterion: z.string(),
-        match: z.enum(['full', 'partial', 'none']),
-        comment: z.string(),
-    })),
-    candidate_profile: z.string(),
-    conclusion: z.object({
-        summary: z.string(),
-        recommendations: z.string(),
-        interview_topics: z.array(z.string()),
-        values_assessment: z.string(),
-    }),
-});
-
-export type Summary = z.infer<typeof SummarySchema>;
-export type Recommendations = z.infer<typeof RecommendationsSchema>;
-export type InterviewTopics = z.infer<typeof InterviewTopicsSchema>;
-export type Report = z.infer<typeof ReportSchema>;
 
 /**
  * The LangGraph SCHEMA DEFINITION for the reporting graph.
  */
 export const ReportingGraphStateAnnotation = Annotation.Root({
-    finalResult: Annotation<FinalResult>(),
-    summary: Annotation<Summary>(),
-    recommendations: Annotation<Recommendations>(),
-    interviewTopics: Annotation<InterviewTopics>(),
-    report: Annotation<Report>(),
+    traceId: Annotation<string | null>(),
+
+    // --- Input from grading ---
+    finalResult: Annotation<FinalResult | null>(),
+
+    // --- Outputs ---
+    summary: Annotation<Summary | null>(),
+    recommendations: Annotation<Recommendations | null>(),
+    interviewTopics: Annotation<InterviewTopics | null>(),
+    report: Annotation<Report | null>(),
+
+    // --- NEW: Summary Retry Loop ---
+    rawSummary: Annotation<string | null>(),
+    summaryError: Annotation<string | null>(),
+    summaryRetries: Annotation<number | null>(),
+
+    // --- NEW: Recommendations Retry Loop ---
+    rawRecommendations: Annotation<string | null>(),
+    recommendationsError: Annotation<string | null>(),
+    recommendationsRetries: Annotation<number | null>(),
+
+    // --- NEW: Topics Retry Loop ---
+    rawTopics: Annotation<string | null>(),
+    topicsError: Annotation<string | null>(),
+    topicsRetries: Annotation<number | null>(),
+
+    // --- NEW: Global Error ---
+    graphError: Annotation<string | null>(),
 });
 
 /**

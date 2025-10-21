@@ -14,7 +14,7 @@ export const failureNode = (state: CandidatePipelineState): { graphError?: strin
     const graphError = (state as any).graphError || 'Unknown pipeline failure';
 
     logger.error(
-        `${chalk.red.bold('PIPELINE FAILED')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)} ${chalk.red('|')} ${chalk.white(`Error: ${graphError}`)}`
+        `${chalk.red.bold('PIPELINE FAILED')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)} ${chalk.red('|')} ${chalk.white(`Error: ${graphError}`)}`
     );
 
     return {};

@@ -8,7 +8,6 @@ import {
     fixValuesAssessmentPrompt,
 } from './grading.prompts';
 import type { GradingGraphState } from './grading.state';
-import { AggregatedData } from "../parsing/parsing.state";
 import { Logger } from '@nestjs/common';
 import chalk from "chalk";
 import { v4 as uuidv4 } from 'uuid';
@@ -24,6 +23,7 @@ import {
     ValuesAssessment,
     ValuesAssessmentSchema
 } from "./grading.types";
+import { AggregatedData } from "../parsing/parsing.types";
 
 // --------------------------------------------------------------------------------
 // --- Logger Initialization ------------------------------------------------------
@@ -45,14 +45,14 @@ const logger = new Logger('GradingNodes');
 export const createGradeAndTypeGenerateNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
         const traceID = uuidv4();
-        logger.log(`${chalk.blue('Node Started')} ${chalk.green('for node:')} ${chalk.yellow('GradeAndTypeGenerateNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.blue('Node Started')} ${chalk.green('for node:')} ${chalk.yellow('GradeAndTypeGenerateNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         const aggregatedResult = state.aggregatedResult as AggregatedData;
         const chain = gradeAndTypePrompt.pipe(llm);
         const result = await chain.invoke({
             candidateInfo: JSON.stringify(aggregatedResult?.candidate_info),
             jobRequirements: JSON.stringify(aggregatedResult?.job_requirements),
         }, { metadata: { node: 'GradeAndTypeGenerateNode' } });
-        logger.log(`${chalk.cyan('Node Finished')} ${chalk.green('for node:')} ${chalk.yellow('GradeAndTypeGenerateNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.cyan('Node Finished')} ${chalk.green('for node:')} ${chalk.yellow('GradeAndTypeGenerateNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         return {
             rawGradeAndType: getRawContent(result, logger),
             traceID,
@@ -96,13 +96,13 @@ export const validateGradeAndTypeNode = (
 export const createFixGradeAndTypeNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
         const traceID = state.traceID as string;
-        logger.log(`${chalk.blue('Node Started (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixGradeAndTypeNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.blue('Node Started (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixGradeAndTypeNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         const chain = fixGradeAndTypePrompt.pipe(llm);
         const result = await chain.invoke({
             error: state.gradeAndTypeError,
             rawOutput: state.rawGradeAndType,
         }, { metadata: { node: 'FixGradeAndTypeNode' } });
-        logger.log(`${chalk.cyan('Node Finished (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixGradeAndTypeNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.cyan('Node Finished (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixGradeAndTypeNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         return { rawGradeAndType: getRawContent(result, logger) };
     };
 
@@ -119,7 +119,7 @@ export const createFixGradeAndTypeNode = (llm: ChatGoogleGenerativeAI) =>
 export const createCriteriaMatchingGenerateNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
         const traceID = state.traceID as string;
-        logger.log(`${chalk.blue('Node Started')} ${chalk.green('for node:')} ${chalk.yellow('CriteriaMatchingGenerateNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.blue('Node Started')} ${chalk.green('for node:')} ${chalk.yellow('CriteriaMatchingGenerateNode')} ${chalk.green('|')} ${chalk.green(`TraceID: ${traceID}`)}`);
         const aggregatedResult = state.aggregatedResult as AggregatedData;
         const chain = criteriaMatchingPrompt.pipe(llm);
         const result = await chain.invoke({
@@ -127,7 +127,7 @@ export const createCriteriaMatchingGenerateNode = (llm: ChatGoogleGenerativeAI) 
             jobRequirements: JSON.stringify(aggregatedResult?.job_requirements),
             recruiterFeedback: JSON.stringify(aggregatedResult?.recruiter_feedback),
         }, { metadata: { node: 'CriteriaMatchingGenerateNode' } });
-        logger.log(`${chalk.cyan('Node Finished')} ${chalk.green('for node:')} ${chalk.yellow('CriteriaMatchingGenerateNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.cyan('Node Finished')} ${chalk.green('for node:')} ${chalk.yellow('CriteriaMatchingGenerateNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         return { rawCriteriaMatching: getRawContent(result, logger) };
     };
 
@@ -143,19 +143,19 @@ export const validateCriteriaMatchingNode = (
     state: GradingGraphState
 ): { criteriaMatching?: CriteriaMatching | null; criteriaMatchingError?: string | null; criteriaMatchingRetries?: number } => {
     const traceID = state.traceID as string;
-    logger.log(`${chalk.blue('Node Validating')} ${chalk.green('for node:')} ${chalk.yellow('validateGradeAndTypeNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+    logger.log(`${chalk.blue('Node Validating')} ${chalk.green('for node:')} ${chalk.yellow('validateGradeAndTypeNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
     const { data, error } = validateAndParse(
         state.rawCriteriaMatching as string | null,
         CriteriaMatchingSchema
     );
     if (error) {
-        logger.warn(`${chalk.yellow('Node Validated (Error)')} ${chalk.green('for node:')} ${chalk.yellow('validateGradeAndTypeNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)} ${chalk.red('Error:')} ${error}`);
+        logger.warn(`${chalk.yellow('Node Validated (Error)')} ${chalk.green('for node:')} ${chalk.yellow('validateGradeAndTypeNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)} ${chalk.red('Error:')} ${error}`);
         return {
             criteriaMatchingError: error,
             criteriaMatchingRetries: (state.criteriaMatchingRetries as number ?? 0) + 1
         };
     }
-    logger.log(`${chalk.cyan('Node Validated (Success)')} ${chalk.green('for node:')} ${chalk.yellow('validateGradeAndTypeNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+    logger.log(`${chalk.cyan('Node Validated (Success)')} ${chalk.green('for node:')} ${chalk.yellow('validateGradeAndTypeNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
     return { criteriaMatching: data, criteriaMatchingError: null };
 };
 
@@ -168,13 +168,13 @@ export const validateCriteriaMatchingNode = (
 export const createFixCriteriaMatchingNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
         const traceID = state.traceID as string;
-        logger.log(`${chalk.blue('Node Started (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixCriteriaMatchingNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.blue('Node Started (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixCriteriaMatchingNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         const chain = fixCriteriaMatchingPrompt.pipe(llm);
         const result = await chain.invoke({
             error: state.criteriaMatchingError,
             rawOutput: state.rawCriteriaMatching,
         }, { metadata: { node: 'FixCriteriaMatchingNode' } });
-        logger.log(`${chalk.cyan('Node Finished (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixCriteriaMatchingNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.cyan('Node Finished (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixCriteriaMatchingNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         return { rawCriteriaMatching: getRawContent(result, logger) };
     };
 
@@ -191,14 +191,14 @@ export const createFixCriteriaMatchingNode = (llm: ChatGoogleGenerativeAI) =>
 export const createValuesAssessmentGenerateNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
         const traceID = state.traceID as string;
-        logger.log(`${chalk.blue('Node Started')} ${chalk.green('for node:')} ${chalk.yellow('ValuesAssessmentGenerateNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.blue('Node Started')} ${chalk.green('for node:')} ${chalk.yellow('ValuesAssessmentGenerateNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         const aggregatedResult = state.aggregatedResult as AggregatedData;
         const chain = valuesAssessmentPrompt.pipe(llm);
         const result = await chain.invoke({
             softSkillsRequired: JSON.stringify(aggregatedResult?.job_requirements.soft_skills_required),
             recruiterFeedback: JSON.stringify(aggregatedResult?.recruiter_feedback),
         }, { metadata: { node: 'ValuesAssessmentGenerateNode' } });
-        logger.log(`${chalk.cyan('Node Finished')} ${chalk.green('for node:')} ${chalk.yellow('ValuesAssessmentGenerateNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.cyan('Node Finished')} ${chalk.green('for node:')} ${chalk.yellow('ValuesAssessmentGenerateNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         return { rawValuesAssessment: getRawContent(result, logger) };
     };
 
@@ -214,19 +214,19 @@ export const validateValuesAssessmentNode = (
     state: GradingGraphState
 ): { valuesAssessment?: ValuesAssessment | null; valuesAssessmentError?: string | null; valuesAssessmentRetries?: number } => {
     const traceID = state.traceID as string;
-    logger.log(`${chalk.blue('Node Validating')} ${chalk.green('for node:')} ${chalk.yellow('validateValuesAssessmentNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+    logger.log(`${chalk.blue('Node Validating')} ${chalk.green('for node:')} ${chalk.yellow('validateValuesAssessmentNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
     const { data, error } = validateAndParse(
         state.rawValuesAssessment as string | null,
         ValuesAssessmentSchema
     );
     if (error) {
-        logger.warn(`${chalk.yellow('Node Validated (Error)')} ${chalk.green('for node:')} ${chalk.yellow('validateValuesAssessmentNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)} ${chalk.red('Error:')} ${error}`);
+        logger.warn(`${chalk.yellow('Node Validated (Error)')} ${chalk.green('for node:')} ${chalk.yellow('validateValuesAssessmentNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)} ${chalk.red('Error:')} ${error}`);
         return {
             valuesAssessmentError: error,
             valuesAssessmentRetries: (state.valuesAssessmentRetries as number ?? 0) + 1
         };
     }
-    logger.log(`${chalk.cyan('Node Validated (Success)')} ${chalk.green('for node:')} ${chalk.yellow('validateValuesAssessmentNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+    logger.log(`${chalk.cyan('Node Validated (Success)')} ${chalk.green('for node:')} ${chalk.yellow('validateValuesAssessmentNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
     return { valuesAssessment: data, valuesAssessmentError: null };
 };
 
@@ -239,13 +239,13 @@ export const validateValuesAssessmentNode = (
 export const createFixValuesAssessmentNode = (llm: ChatGoogleGenerativeAI) =>
     async (state: GradingGraphState): Promise<Partial<GradingGraphState>> => {
         const traceID = state.traceID as string;
-        logger.log(`${chalk.blue('Node Started (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixValuesAssessmentNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.blue('Node Started (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixValuesAssessmentNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         const chain = fixValuesAssessmentPrompt.pipe(llm);
         const result = await chain.invoke({
             error: state.valuesAssessmentError,
             rawOutput: state.rawValuesAssessment,
         }, { metadata: { node: 'FixValuesAssessmentNode' } });
-        logger.log(`${chalk.cyan('Node Finished (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixValuesAssessmentNode')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+        logger.log(`${chalk.cyan('Node Finished (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixValuesAssessmentNode')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
         return { rawValuesAssessment: getRawContent(result, logger) };
     };
 
@@ -263,7 +263,7 @@ export const createFixValuesAssessmentNode = (llm: ChatGoogleGenerativeAI) =>
  */
 export const assessmentAggregatorNode = (state: GradingGraphState): { finalResult: FinalResult | null; graphError: string | null } => {
     const traceID = state.traceID as string;
-    logger.log(`${chalk.blue('Aggregator Started')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+    logger.log(`${chalk.blue('Aggregator Started')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
 
     const aggregatedResult = state.aggregatedResult as AggregatedData | null;
     const gradeAndType = state.gradeAndType as GradeAndType | null;
@@ -296,7 +296,7 @@ export const assessmentAggregatorNode = (state: GradingGraphState): { finalResul
         assessment: AssessmentSchema.parse(assessment),
     };
 
-    logger.log(`${chalk.cyan('Aggregator Finished')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+    logger.log(`${chalk.cyan('Aggregator Finished')} ${chalk.green('for node:')} ${chalk.yellow('GradingAggregator')} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
     return { finalResult: FinalResultSchema.parse(finalResult), graphError: null };
 };
 
@@ -314,6 +314,6 @@ export const handleFailureNode = (state: GradingGraphState): { graphError: strin
     if (state.criteriaMatchingError) finalError = `Failed on Criteria Matching: ${state.criteriaMatchingError}`;
     if (state.valuesAssessmentError) finalError = `Failed on Values Assessment: ${state.valuesAssessmentError}`;
 
-    logger.error(`${chalk.red(finalError)} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceID}`)}`);
+    logger.error(`${chalk.red(finalError)} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceID}`)}`);
     return { graphError: finalError };
 };

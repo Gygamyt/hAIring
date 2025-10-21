@@ -1,5 +1,9 @@
 import { PromptTemplate } from '@langchain/core/prompts';
 
+// --------------------------------------------------------------------------------
+// --- Generation Prompts ---------------------------------------------------------
+// --------------------------------------------------------------------------------
+
 /**
  * Prompt to extract structured data ONLY from a CV.
  */
@@ -53,4 +57,72 @@ JSON output format:
 {{
   "comments": "..."
 }}`
+);
+
+// --------------------------------------------------------------------------------
+// --- НОВЫЙ РАЗДЕЛ: Correction (Fixer) Prompts ------------------------------------
+// --------------------------------------------------------------------------------
+
+/**
+ * Prompt to fix an invalid JSON output from cvParserPrompt.
+ */
+export const fixCvJsonPrompt = PromptTemplate.fromTemplate(
+    `You are a JSON correction agent. A previous step failed to produce valid JSON.
+Your task is to correct the invalid JSON. Pay close attention to the error message.
+Ensure the output STRICTLY follows this format:
+{{
+  "first_name": "...",
+  "last_name": "...",
+  "skills": ["...", "..."],
+  "experience": "..."
+}}
+
+**The Error:**
+{error}
+
+**The Invalid JSON you produced:**
+{rawOutput}
+
+**Corrected JSON:**`
+);
+
+/**
+ * Prompt to fix an invalid JSON output from requirementsParserPrompt.
+ */
+export const fixRequirementsJsonPrompt = PromptTemplate.fromTemplate(
+    `You are a JSON correction agent. A previous step failed to produce valid JSON.
+Your task is to correct the invalid JSON. Pay close attention to the error message.
+Ensure the output STRICTLY follows this format:
+{{
+  "hard_skills_required": ["...", "..."],
+  "soft_skills_required": ["...", "..."]
+}}
+
+**The Error:**
+{error}
+
+**The Invalid JSON you produced:**
+{rawOutput}
+
+**Corrected JSON:**`
+);
+
+/**
+ * Prompt to fix an invalid JSON output from feedbackParserPrompt.
+ */
+export const fixFeedbackJsonPrompt = PromptTemplate.fromTemplate(
+    `You are a JSON correction agent. A previous step failed to produce valid JSON.
+Your task is to correct the invalid JSON. Pay close attention to the error message.
+Ensure the output STRICTLY follows this format:
+{{
+  "comments": "..."
+}}
+
+**The Error:**
+{error}
+
+**The Invalid JSON you produced:**
+{rawOutput}
+
+**Corrected JSON:**`
 );
