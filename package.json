@@ -12,7 +12,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "gen:api": "openapi-generator-cli generate -i ./fastapi-spec.json -g typescript-nestjs -o ./apps/api/src/generated --additional-properties=generateModels=true,generateApis=false,disallowAdditionalPropertiesIfNotPresent=false",
     "watch:packages": "turbo run dev --parallel",
-    "watch:api": "pnpm --filter=api run start:dev"
+    "watch:api": "pnpm --filter=api run start:dev",
+    "gen:subgraph": "node scripts/gen-subgraph.mjs"
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.25.0",

@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GoogleDriveService } from '@hairing/google-drive';
 import { DocumentParserService } from '@hairing/document-parser';
-import { Job } from 'bullmq'; // Import Job type if needed for logging/data access
 
 @Injectable()
 export class DownloadService {

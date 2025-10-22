@@ -1,4 +1,3 @@
-// apps/worker/src/results/results.module.ts
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ResultsProcessor } from './results.processor';
