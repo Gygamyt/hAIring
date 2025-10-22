@@ -81,13 +81,11 @@ export class ResultsService {
             await this.addNextJob(parentJobId, 'job-2-transcribe', nextJobPayload);
             this.logger.log(`[Job ${parentJobId}] Step 1 complete. Enqueued job-2-transcribe.`);
 
-            // FIX: Correct updateJobProgress call
             await this.analysisQueue.updateJobProgress(parentJobId, { step: 'downloaded' });
             return { download: 'success' };
 
         } catch (error: any) {
             this.logger.error(`[Job ${parentJobId}] Step 1 failed during download/parse: ${error.message}`, error.stack);
-            // FIX: Correct updateJobProgress call
             await this.analysisQueue.updateJobProgress(parentJobId, { step: 'failed' });
             throw error;
         }
