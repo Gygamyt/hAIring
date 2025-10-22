@@ -1,13 +1,16 @@
+// apps/worker/src/results/results.module.ts
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ResultsProcessor } from './results.processor';
-import { ResultsService } from './results.service';
+import { ResultsService } from './results.service'; // Keep for orchestration? Or remove if Processor handles it
 import { GoogleDriveModule } from '@hairing/google-drive';
 import { TranscriptionModule } from '@hairing/transcription';
 import { DocumentParserModule } from '@hairing/document-parser';
-// Removed: import { AudioExtractorModule } from '../audio-extractor/audio-extractor.module';
+import { DownloadService } from './download.service';
+import { TranscriptionOrchestrationService } from './transcription-orchestration.service';
+import { AiAnalysisService } from './ai-analysis.service';
+import { AiCoreModule } from "@hairing/nest-ai";
 // TODO: Import AiPipelinesModule when ready
-// import { AiPipelinesModule } from '@hairing/nest-ai';
 
 @Module({
     imports: [
@@ -15,13 +18,15 @@ import { DocumentParserModule } from '@hairing/document-parser';
         GoogleDriveModule,
         TranscriptionModule,
         DocumentParserModule,
-        // Removed: AudioExtractorModule,
+        AiCoreModule,
         // TODO: Add AiPipelinesModule later
-        // AiPipelinesModule,
     ],
     providers: [
         ResultsProcessor,
         ResultsService,
+        DownloadService,
+        TranscriptionOrchestrationService,
+        AiAnalysisService,
     ],
 })
 

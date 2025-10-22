@@ -13,7 +13,8 @@
     "@hairing/utils": "workspace:^",
     "@hairing/ai-pipelines": "workspace:*",
     "@nestjs/common": "^11.1.6",
-    "@nestjs/config": "^3.0.0"
+    "@nestjs/config": "^3.0.0",
+    "@langchain/langgraph": "^0.4.9"
   },
   "devDependencies": {
     "@hairing/config-tsconfig": "workspace:^"
