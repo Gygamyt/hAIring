@@ -1,11 +1,10 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigType } from '@nestjs/config';
-import { transcriptionConfig } from './config/transcription.config';
-import { TranscriptionService } from './transcription.service';
-import { RealtimeConnectionService } from './realtime/realtime-connection.service';
-import { RealtimeEventHandler } from './realtime/realtime-event.handler';
-import { ASSEMBLYAI_CLIENT } from './constants';
-import { AssemblyAI } from 'assemblyai';
+import { Module } from "@nestjs/common";
+import { ConfigModule, ConfigType } from "@nestjs/config";
+import { transcriptionConfig } from "./config/transcription.config";
+import { TranscriptionService } from "./transcription.service";
+import { ASSEMBLYAI_CLIENT } from "./constants";
+import { AssemblyAI } from "assemblyai";
+
 
 @Module({
     imports: [
@@ -13,8 +12,6 @@ import { AssemblyAI } from 'assemblyai';
     ],
     providers: [
         TranscriptionService,
-        RealtimeConnectionService,
-        RealtimeEventHandler,
         {
             provide: ASSEMBLYAI_CLIENT,
             useFactory: (config: ConfigType<typeof transcriptionConfig>) => {
@@ -30,5 +27,5 @@ import { AssemblyAI } from 'assemblyai';
         TranscriptionService
     ],
 })
-
-export class TranscriptionModule {}
+export class TranscriptionModule {
+}

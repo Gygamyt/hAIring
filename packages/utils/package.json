@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "peerDependencies": {
+    "@nestjs/common": "^11.1.6"
+  },
   "devDependencies": {
-    "@hairing/config-tsconfig": "workspace:^"
+    "@hairing/config-tsconfig": "workspace:^",
+    "@types/cli-progress": "^3.11.6"
   },
   "scripts": {
     "dev": "tsc --watch",
@@ -16,5 +20,8 @@
     "type": "git",
     "url": "https://github.com/Gygamyt/hAIring.git"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "cli-progress": "^3.12.0"
+  }
 }

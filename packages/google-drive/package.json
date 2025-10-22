@@ -19,7 +19,6 @@
   "devDependencies": {
     "@hairing/config-jest": "workspace:^",
     "@hairing/config-tsconfig": "workspace:^",
-    "@nestjs/common": "^10.3.10",
     "@nestjs/testing": "^10.0.0",
     "@types/base-64": "^1.0.2",
     "@types/jest": "^29.5.2",
