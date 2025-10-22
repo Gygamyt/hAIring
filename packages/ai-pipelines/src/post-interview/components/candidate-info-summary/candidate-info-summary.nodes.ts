@@ -2,7 +2,7 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { Logger } from '@nestjs/common';
 import chalk from 'chalk';
 import { v4 as uuidv4 } from 'uuid';
-import { getRawContent, validateAndParse } from '../../../utils';
+import { createFailureNode, createRetryRouter, getRawContent, validateAndParse } from '../../../utils';
 import { ICandidateInfoSummaryState } from "./candidate-info-summary.state";
 import { createCandidateInfoSummaryFixPrompt, createCandidateInfoSummaryGeneratePrompt } from "./candidate-info-summary.prompts";
 import { CandidateInfoSummaryOutput, CandidateInfoSummaryOutputSchema } from "./candidate-info-summary.types";
@@ -148,51 +148,16 @@ export const createCandidateInfoSummaryFixNode =
 /**
  * A synchronous node that handles terminal failures.
  */
-export const handleFailureNode = (
-    state: ICandidateInfoSummaryState,
-): { validationError: string } => {
-    const traceId = state.traceId as string;
-    const finalError = `Failed on CV Summary Parsing: ${state.validationError}`;
+export const handleFailureNode = createFailureNode(
+    logger,
+    'Failed on Communication Skills Parsing',
+);
 
-    logger.error(
-        `${chalk.red(finalError)} ${chalk.green('|')} ${chalk.gray(
-            `TraceID: ${traceId}`,
-        )}`,
-    );
-    return { validationError: finalError };
-};
 
 /**
  * Conditionally routes the graph based on the validationError and retry count.
  */
-export const routerForCandidateInfoSummary = (
-    state: ICandidateInfoSummaryState,
-) => {
-    const traceId = state.traceId as string;
-    const error = state.validationError;
-    const retries = (state.retries as number | null ?? 0);
-
-    if (!error) {
-        logger.log(
-            `Routing: ${chalk.cyan('Success')}. Proceeding to END. | ${chalk.gray(
-                `TraceID: ${traceId}`,
-            )}`,
-        );
-        return 'success';
-    }
-    if (retries >= MAX_RETRIES) {
-        logger.error(
-            `Routing: ${chalk.red(
-                'Max retries reached',
-            )}. Failing. | ${chalk.gray(`TraceID: ${traceId}`)}`,
-        );
-        return 'failure';
-    }
-
-    logger.warn(
-        `Routing: ${chalk.yellow('Validation failed')}. Retrying (Attempt ${
-            retries + 1
-        }). | ${chalk.gray(`TraceID: ${traceId}`)}`,
-    );
-    return 'fix';
-};
+export const routerForCandidateInfoSummary = createRetryRouter(
+    logger,
+    MAX_RETRIES,
+);
