@@ -34,7 +34,7 @@ Example Output:
 \`\`\`
 
 Transcription Text:
-{transcriptionText}`,
+{transcript}`,
 );
 
 /**

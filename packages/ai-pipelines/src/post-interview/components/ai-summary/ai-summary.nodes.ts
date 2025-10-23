@@ -48,7 +48,7 @@ export const createAiSummaryGenerateNode =
             const result = await chain.invoke(
                 {
                     transcript: state.transcript,
-                    topics: state.topics,
+                    topicList: state.topicList ?? [],
                 },
                 { metadata: { node: 'AiSummaryGenerateNode' } },
             );

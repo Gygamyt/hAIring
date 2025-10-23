@@ -11,4 +11,4 @@ export const ExtractedTopicsSchema = z.object({
 /**
  * TypeScript type inferred from the schema.
  */
-export type ExtractedTopics = z.infer<typeof ExtractedTopicsSchema>;
+export type TopicExtractorOutput = z.infer<typeof ExtractedTopicsSchema>;

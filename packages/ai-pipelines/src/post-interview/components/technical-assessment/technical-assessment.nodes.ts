@@ -48,7 +48,7 @@ export const createTechnicalAssessmentGenerateNode =
             const result = await chain.invoke(
                 {
                     transcript: state.transcript,
-                    topics: state.topics,
+                    topicList: state.topicList ?? [],
                 },
                 { metadata: { node: 'TechnicalAssessmentGenerateNode' } },
             );

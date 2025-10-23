@@ -17,7 +17,7 @@ export const CandidateInfoSummaryStateAnnotation = Annotation.Root({
     /**
      * A unique ID to trace this run through the logs.
      */
-    traceId: Annotation<string | null>(),
+    cvTraceId: Annotation<string | null>(),
 
     // --- Output ---
     /**
@@ -26,8 +26,8 @@ export const CandidateInfoSummaryStateAnnotation = Annotation.Root({
     parsedCv: Annotation<CandidateInfoSummaryOutput | null>(),
 
     // --- Error Handling ---
-    validationError: Annotation<string | null>(),
-    retries: Annotation<number>(),
+    cvValidationError: Annotation<string | null>(),
+    cvRetries: Annotation<number>(),
 });
 
 /**

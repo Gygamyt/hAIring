@@ -23,11 +23,10 @@ export const CandidateInfoSummaryOutputSchema = z.object({
             'A comprehensive list of all skills, technologies, or methodologies explicitly mentioned in the CV.',
         ),
     yearsOfExperience: z
+        .coerce
         .number()
         .optional()
         .describe('The approximate total number of years of relevant professional experience.'),
 });
 
-export type CandidateInfoSummaryOutput = z.infer<
-    typeof CandidateInfoSummaryOutputSchema
->;
+export type CandidateInfoSummaryOutput = z.infer<typeof CandidateInfoSummaryOutputSchema>;

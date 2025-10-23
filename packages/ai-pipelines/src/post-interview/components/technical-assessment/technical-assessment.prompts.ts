@@ -11,7 +11,7 @@ Next, analyze the interview transcript, paying close attention to the candidate'
 
 KEY TOPICS:
 ---
-{topics}
+{topicList}
 ---
 
 INTERVIEW TRANSCRIPT:
@@ -37,7 +37,7 @@ JSON output format:
  */
 export const createTechnicalAssessmentGeneratePrompt = () => {
     return new PromptTemplate({
-        inputVariables: ['transcript', 'topics'],
+        inputVariables: ['transcript', 'topicList'],
         template: GENERATE_PROMPT_TEMPLATE,
     });
 };

@@ -20,7 +20,7 @@ export const CommunicationSkillsStateAnnotation = Annotation.Root({
     /**
      * A unique ID to trace this run through the logs.
      */
-    traceId: Annotation<string | null>(),
+    commTraceId: Annotation<string | null>(),
 
     // --- Output ---
     /**
@@ -29,8 +29,8 @@ export const CommunicationSkillsStateAnnotation = Annotation.Root({
     parsedCommunicationSkills: Annotation<CommunicationSkillsOutput | null>(),
 
     // --- Error Handling ---
-    validationError: Annotation<string | null>(),
-    retries: Annotation<number>(),
+    commValidationError: Annotation<string | null>(),
+    commRetries: Annotation<number>(),
 });
 
 /**

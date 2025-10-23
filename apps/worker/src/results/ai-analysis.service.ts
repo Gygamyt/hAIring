@@ -1,24 +1,27 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import chalk from 'chalk';
-import { CompiledStateGraph, TOPIC_EXTRACTOR_PROVIDER } from "@hairing/nest-ai";
-import { ResultsAnalysisResponseDto } from "@hairing/dto/src";
-import { ExtractedTopics, TopicExtractorState } from "@hairing/ai-pipelines/src/post-interview/components/topic-extractor";
+import {
+    CompiledStateGraph,
+    FINAL_REPORT_GRAPH_PROVIDER,
+} from '@hairing/nest-ai';
+import { ResultsAnalysisResponseDto } from '@hairing/dto/src';
+import { IFinalReportState } from "@hairing/ai-pipelines/src/post-interview/final-report/finalreport.state";
+import { FullReportDto } from "@hairing/ai-pipelines/src/post-interview/final-report/finalreport.types";
 
 @Injectable()
 export class AiAnalysisService {
     private readonly logger = new Logger(AiAnalysisService.name);
 
     constructor(
-        @Inject(TOPIC_EXTRACTOR_PROVIDER)
-        private readonly topicExtractorPipeline: CompiledStateGraph<
-            TopicExtractorState,
-            Partial<TopicExtractorState>
+        @Inject(FINAL_REPORT_GRAPH_PROVIDER)
+        private readonly finalReportPipeline: CompiledStateGraph<
+            IFinalReportState,
+            Partial<IFinalReportState>
         >,
-        // TODO: Inject the Final Report Pipeline provider here later
     ) {}
 
     /**
-     * Handles Step 3: Running the AI analysis, starting with Topic Extraction.
+     * Handles Step 3: Running the full AI analysis pipeline in a SINGLE call.
      * @param jobData The payload containing transcription and all context texts.
      * @returns The final analysis report structured as ResultsAnalysisResponseDto.
      */
@@ -32,124 +35,120 @@ export class AiAnalysisService {
             requirementsText: string;
             cvText: string;
             cvFileName?: string;
-        }
+        };
     }): Promise<ResultsAnalysisResponseDto> {
         const { parentJobId, payload } = jobData;
-        this.logger.log(`[Job ${parentJobId}] (AiAnalysisService) Starting AI Step: Topic Extraction...`);
-        // Destructure all needed fields from payload
+        this.logger.log(
+            `[Job ${parentJobId}] (AiAnalysisService) Starting Full AI Pipeline...`,
+        );
+
         const {
             transcriptionText,
-            matrixText,
             valuesText,
-            portraitText,
-            requirementsText,
             cvText,
-            cvFileName
         } = payload;
 
-        // Prepare Input for Topic Extractor
-        const pipelineInput: Partial<TopicExtractorState> = {
-            traceId: parentJobId,
-            transcriptionText: transcriptionText,
-            // Ensure all necessary input fields defined in TopicExtractorState are here
-            // If TopicExtractorState doesn't need other texts, no need to include them
-        };
-
-        let topicExtractorState: Partial<TopicExtractorState>;
         try {
-            // Invoke Topic Extractor Subgraph
-            this.logger.log(`[Job ${parentJobId}] (AiAnalysisService) Invoking Topic Extractor pipeline...`);
-            topicExtractorState = await this.topicExtractorPipeline.invoke(pipelineInput);
-            this.logger.log(`[Job ${parentJobId}] (AiAnalysisService) Topic Extractor pipeline finished.`);
+            this.logger.log(
+                `[Job ${parentJobId}] (AiAnalysisService) Invoking Final Report pipeline...`,
+            );
 
-            // Check for Graph Error from Topic Extractor
-            if (topicExtractorState.graphError) {
-                this.logger.error(`[Job ${parentJobId}] (AiAnalysisService) Topic Extractor Pipeline failed: ${topicExtractorState.graphError}`);
-                throw new Error(`AI Pipeline (Topic Extractor) failed: ${topicExtractorState.graphError}`);
-            }
-            if (!topicExtractorState.extractedTopics) {
-                this.logger.error(`[Job ${parentJobId}] (AiAnalysisService) Topic Extractor finished but produced no topics object.`);
-                throw new Error('AI Pipeline (Topic Extractor) finished but produced no topics object.');
-            }
-
-            // Assert type and extract topics
-            const extractedTopicsData = topicExtractorState.extractedTopics as ExtractedTopics;
-            const extractedTopics = extractedTopicsData.topics;
-
-            if (!extractedTopics || extractedTopics.length === 0) {
-                this.logger.warn(`[Job ${parentJobId}] (AiAnalysisService) Topic Extractor finished but the topics array is empty.`);
-                // Consider if empty topics is an error or acceptable result
-            }
-
-            this.logger.warn(JSON.stringify(extractedTopics, null, 2));
-
-            this.logger.log(`${chalk.green(`[Job ${parentJobId}] (AiAnalysisService) Successfully extracted ${extractedTopics?.length ?? 0} topics.`)}`);
-
-            // --- TODO: Invoke Final Report Pipeline ---
-            // The input for the next pipeline would likely include:
-            // - parentJobId (as traceId)
-            // - extractedTopics
-            // - transcriptionText
-            // - matrixText, valuesText, portraitText, requirementsText, cvText
-            /*
-            const finalReportInput: Partial<FinalReportState> = {
-                traceId: parentJobId,
-                extractedTopics: extractedTopicsData, // Pass the object if needed
-                transcriptionText,
-                matrixText,
-                valuesText,
-                portraitText,
-                requirementsText,
-                cvText
+            const finalReportInput: Partial<IFinalReportState> = {
+                transcript: transcriptionText,
+                cvText: cvText,
+                companyValues: valuesText,
             };
-            const finalReportState = await this.finalReportPipeline.invoke(finalReportInput);
-            if(finalReportState.graphError) { ... }
-            if(!finalReportState.report) { ... }
-            const finalReportData = finalReportState.report as FullReportDto;
-            */
-            // --- END TODO ---
 
-            // --- Construct Final Response (Using real topics, real CV info if available, rest STUBBED) ---
-            // Replace this stubbed report construction with data from the finalReportState.report when implemented
+            const finalReportState =
+                await this.finalReportPipeline.invoke(finalReportInput);
+
+            if (finalReportState.graphError) {
+                this.logger.error(
+                    `[Job ${parentJobId}] (AiAnalysisService) Final Report Pipeline failed: ${finalReportState.graphError}`,
+                );
+                throw new Error(
+                    `AI Pipeline (Final Report) failed: ${finalReportState.graphError}`,
+                );
+            }
+            if (!finalReportState.finalReport) {
+                this.logger.error(
+                    `[Job ${parentJobId}] (AiAnalysisService) Final Report finished but produced no 'finalReport' object.`,
+                );
+                throw new Error(
+                    "AI Pipeline (Final Report) finished but produced no 'finalReport' object.",
+                );
+            }
+
+            const finalReport = finalReportState.finalReport as FullReportDto;
+
+            this.logger.log(
+                `[Job ${parentJobId}] (AiAnalysisService) Mapping AI DTO to API Response DTO...`,
+            );
+
             const finalResponse: ResultsAnalysisResponseDto = {
-                message: "Analysis steps completed. Topic extraction successful. Final report stubbed.",
+                message: 'Analysis pipeline completed successfully.',
                 success: true,
-                report: { // Structure matching FullReportDto
-                    ai_summary: `AI summary for job ${parentJobId} (stub)`,
-                    // Use actual CV info if needed, otherwise keep stub
+                report: {
+                    ai_summary: finalReport.aiSummary?.overallSummary ?? 'N/A',
                     candidate_info: {
-                        full_name: cvFileName || "N/A", // Use filename if available
-                        experience_years: "N/A (stub)", // Needs extraction from cvText by AI
-                        tech_stack: [], // Needs extraction from cvText by AI
-                        projects: [], // Needs extraction from cvText by AI
-                        domains: [], // Needs extraction from cvText by AI
-                        tasks: [] // Needs extraction from cvText by AI
+                        full_name: finalReport.cvSummary?.fullName ?? 'N/A',
+                        experience_years:
+                            finalReport.cvSummary?.yearsOfExperience?.toString() ??
+                            'N/A',
+                        tech_stack: finalReport.cvSummary?.skills ?? [],
+                        projects: [],
+                        domains: [],
+                        tasks: [],
                     },
                     interview_analysis: {
-                        topics: extractedTopics || [], // Use REAL extracted topics
-                        tech_assignment: "N/A (stub)", // Needs final report AI
-                        knowledge_assessment: "N/A (stub)" // Needs final report AI
+                        topics: finalReport.topics?.topics ?? [],
+                        tech_assignment:
+                            finalReport.technicalAssessment?.summary ?? 'N/A',
+                        knowledge_assessment:
+                            finalReport.technicalAssessment?.summary ?? 'N/A',
                     },
-                    communication_skills: { assessment: "N/A (stub)" }, // Needs final report AI
-                    foreign_languages: { assessment: "N/A (stub)" }, // Needs final report AI
-                    team_fit: "N/A (stub)", // Needs final report AI
-                    additional_information: [], // Needs final report AI
-                    conclusion: { // Needs final report AI
-                        recommendation: "N/A (stub)",
-                        assessed_level: "N/A (stub)",
-                        summary: "N/A (stub)"
+                    communication_skills: {
+                        assessment:
+                            finalReport.communicationSkills?.summary ?? 'N/A',
                     },
-                    recommendations_for_candidate: [] // Needs final report AI
-                }
+                    foreign_languages: {
+                        assessment:
+                            finalReport.languageAssessment?.summary ?? 'N/A',
+                    },
+                    team_fit: finalReport.valuesFit?.summary ?? 'N/A',
+                    additional_information: [],
+                    conclusion: {
+                        recommendation:
+                            finalReport.overallConclusion?.recommendation ??
+                            'N/A',
+                        assessed_level:
+                            finalReport.overallConclusion?.recommendation ?? 'N/A',
+                        summary:
+                            finalReport.overallConclusion?.summary ?? 'N/A',
+                    },
+                    recommendations_for_candidate:
+                        finalReport.overallConclusion?.feedbackForCandidate ?? [],
+                },
             };
-            // --- End Final Response ---
 
-            this.logger.log(`[Job ${parentJobId}] (AiAnalysisService) AI Step finished successfully.`);
+            this.logger.log(JSON.stringify(finalReport, null, 2));
+
+            this.logger.log(
+                `${chalk.green(
+                    `[Job ${parentJobId}] (AiAnalysisService) AI Step finished successfully. Report generated.`,
+                )}`,
+            );
             return finalResponse;
-
         } catch (error: any) {
-            this.logger.error(`[Job ${parentJobId}] (AiAnalysisService) AI Step failed: ${error.message}`, error.stack);
-            throw error; // Re-throw for the processor
+            this.logger.error(
+                `[Job ${parentJobId}] (AiAnalysisService) AI Step failed: ${error.message}`,
+                error.stack,
+            );
+            return {
+                message: `AI pipeline failed: ${error.message}`,
+                success: false,
+                report: null as any,
+            };
         }
     }
 }

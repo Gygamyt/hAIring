@@ -9,7 +9,7 @@ Do not provide scores or detailed technical analysis. Focus on the overall narra
 
 KEY TOPICS:
 ---
-{topics}
+{topicList}
 ---
 
 INTERVIEW TRANSCRIPT:
@@ -36,7 +36,7 @@ JSON output format:
  */
 export const createAiSummaryGeneratePrompt = () => {
     return new PromptTemplate({
-        inputVariables: ['transcript', 'topics'],
+        inputVariables: ['transcript', 'topicList'],
         template: GENERATE_PROMPT_TEMPLATE,
     });
 };

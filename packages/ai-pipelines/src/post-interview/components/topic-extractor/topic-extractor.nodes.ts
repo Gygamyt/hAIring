@@ -2,17 +2,17 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { Logger } from '@nestjs/common';
 import chalk from 'chalk';
 import { v4 as uuidv4 } from 'uuid';
-import { getRawContent, validateAndParse } from '../../utils';
 import {
     topicExtractorPrompt,
     fixTopicExtractorJsonPrompt,
 } from './topic-extractor.prompts';
 import {
-    ExtractedTopics,
+    TopicExtractorOutput,
     ExtractedTopicsSchema,
 } from './topic-extractor.types';
 import { TopicExtractorState } from './topic-extractor.state';
 import { BaseMessage } from '@langchain/core/messages';
+import { getRawContent, validateAndParse } from "../../../utils";
 
 // --- Logger ---
 const logger = new Logger('TopicExtractorNodes');
@@ -30,51 +30,51 @@ export const createTopicExtractorGenerateNode =
         async (
             state: TopicExtractorState,
         ): Promise<Partial<TopicExtractorState>> => {
-            const traceId = state.traceId ?? uuidv4();
+            const topicTraceId = state.topicTraceId ?? uuidv4();
             logger.log(
                 `${chalk.blue('Node Started')} ${chalk.green('for node:')} ${chalk.yellow(
                     'TopicExtractorGenerateNode',
-                )} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`,
+                )} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${topicTraceId}`)}`,
             );
 
-            const transcriptionText = state.transcriptionText as string | null;
-            if (!transcriptionText) {
+            const transcript = state.transcript as string | null;
+            if (!transcript) {
                 logger.error(
                     `${chalk.red('Node Failed (Input Missing)')} ${chalk.green(
                         'for node:',
                     )} ${chalk.yellow('TopicExtractorGenerateNode')} ${chalk.green(
                         '|',
-                    )} ${chalk.yellow(`TraceID: ${traceId}`)} Error: transcriptionText is missing.`,
+                    )} ${chalk.yellow(`TraceID: ${topicTraceId}`)} Error: transcriptionText is missing.`,
                 );
                 return {
-                    graphError: 'Input transcriptionText is missing for Topic Extractor.',
-                    traceId,
+                    topicsError: 'Input transcriptionText is missing for Topic Extractor.',
+                    topicTraceId,
                 };
             }
 
             try {
                 const chain = topicExtractorPrompt.pipe(llm);
                 const result: BaseMessage = await chain.invoke(
-                    { transcriptionText },
+                    { transcript },
                     { metadata: { node: 'TopicExtractorGenerateNode' } },
                 );
 
                 logger.log(
                     `${chalk.cyan('Node Finished')} ${chalk.green('for node:')} ${chalk.yellow(
                         'TopicExtractorGenerateNode',
-                    )} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)}`,
+                    )} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${topicTraceId}`)}`,
                 );
                 return {
                     rawTopics: getRawContent(result, logger),
                     topicsRetries: 0,
-                    traceId,
-                    graphError: null,
+                    topicTraceId,
+                    topicsError: null,
                 };
             } catch (error: any) {
                 logger.error(
                     `${chalk.red('Node Failed (Invoke)')} ${chalk.green('for node:')} ${chalk.yellow(
                         'TopicExtractorGenerateNode',
-                    )} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${traceId}`)} ${chalk.red(
+                    )} ${chalk.green('|')} ${chalk.yellow(`TraceID: ${topicTraceId}`)} ${chalk.red(
                         'Error:',
                     )} ${error.message}`,
                 );
@@ -82,7 +82,7 @@ export const createTopicExtractorGenerateNode =
                     rawTopics: null,
                     topicsError: `LLM call failed: ${error.message}`,
                     topicsRetries: 0,
-                    traceId,
+                    topicTraceId,
                 };
             }
         };
@@ -94,11 +94,11 @@ export const createTopicExtractorGenerateNode =
 export const validateTopicExtractorNode = (
     state: TopicExtractorState,
 ): {
-    extractedTopics?: ExtractedTopics | null;
+    extractedTopics?: TopicExtractorOutput | null;
     topicsError?: string | null; // <--- The expected type
     topicsRetries?: number;
 } => {
-    const traceId = state.traceId as string;
+    const traceId = state.topicTraceId as string;
     logger.log(
         `${chalk.blue('Node Validating')} ${chalk.green('for node:')} ${chalk.yellow(
             'validateTopicExtractorNode',
@@ -166,7 +166,7 @@ export const createFixTopicExtractorNode =
         async (
             state: TopicExtractorState,
         ): Promise<Partial<TopicExtractorState>> => {
-            const traceId = state.traceId as string;
+            const traceId = state.topicTraceId as string;
             logger.log(`${chalk.blue('Node Started (Fixing)')} ${chalk.green('for node:')} ${chalk.yellow('FixTopicExtractorNode')} ${chalk.green('|',)} ${chalk.yellow(`TraceID: ${traceId}`)}`,);
 
             const topicsError = state.topicsError as string | null;
@@ -221,7 +221,7 @@ export const createFixTopicExtractorNode =
 export const handleTopicExtractorFailureNode = (
     state: TopicExtractorState,
 ): { graphError: string } => {
-    const traceId = state.traceId as string;
+    const traceId = state.topicTraceId as string;
     const finalError = `Topic Extractor failed after retries: ${
         state.topicsError || 'Unknown validation error'
     }`;

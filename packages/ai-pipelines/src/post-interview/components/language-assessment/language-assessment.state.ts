@@ -21,7 +21,7 @@ export const LanguageAssessmentStateAnnotation = Annotation.Root({
     /**
      * A unique ID to trace this run through the logs.
      */
-    traceId: Annotation<string | null>(),
+    langTraceId: Annotation<string | null>(),
 
     // --- Output ---
     /**
@@ -31,8 +31,8 @@ export const LanguageAssessmentStateAnnotation = Annotation.Root({
     parsedLanguageAssessment: Annotation<LanguageAssessmentOutput | null>(),
 
     // --- Error Handling ---
-    validationError: Annotation<string | null>(),
-    retries: Annotation<number>(),
+    langValidationError: Annotation<string | null>(),
+    langRetries: Annotation<number>(),
 });
 
 /**

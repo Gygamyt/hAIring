@@ -15,7 +15,7 @@ export const TechnicalAssessmentStateAnnotation = Annotation.Root({
      * The list of key topics extracted from the transcript.
      * This helps the AI focus on relevant sections.
      */
-    topics: Annotation<string[]>(),
+    topicList: Annotation<string[] | null>(),
 
     // --- Internal ---
     /**
@@ -25,7 +25,7 @@ export const TechnicalAssessmentStateAnnotation = Annotation.Root({
     /**
      * A unique ID to trace this run through the logs.
      */
-    traceId: Annotation<string | null>(),
+    techTraceId: Annotation<string | null>(),
 
     // --- Output ---
     /**
@@ -34,8 +34,8 @@ export const TechnicalAssessmentStateAnnotation = Annotation.Root({
     parsedTechnicalAssessment: Annotation<TechnicalAssessmentOutput | null>(),
 
     // --- Error Handling ---
-    validationError: Annotation<string | null>(),
-    retries: Annotation<number>(),
+    techValidationError: Annotation<string | null>(),
+    techRetries: Annotation<number>(),
 });
 
 /**

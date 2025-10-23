@@ -1,6 +1,6 @@
 import { Annotation } from '@langchain/langgraph';
 import { InferGraphState } from '../../../utils';
-import { AiSummaryOutput } from "../overall-conclusion";
+import { AiSummaryOutput } from "./ai-summary.types";
 
 /**
  * The LangGraph SCHEMA DEFINITION for the AiSummary subgraph.
@@ -14,7 +14,7 @@ export const AiSummaryStateAnnotation = Annotation.Root({
     /**
      * The list of key topics extracted from the transcript.
      */
-    topics: Annotation<string[]>(),
+    topicList: Annotation<string[] | null>(),
 
     // --- Internal ---
     /**
@@ -24,7 +24,7 @@ export const AiSummaryStateAnnotation = Annotation.Root({
     /**
      * A unique ID to trace this run through the logs.
      */
-    traceId: Annotation<string | null>(),
+    summaryTraceId: Annotation<string | null>(),
 
     // --- Output ---
     /**
@@ -33,8 +33,8 @@ export const AiSummaryStateAnnotation = Annotation.Root({
     parsedAiSummary: Annotation<AiSummaryOutput | null>(),
 
     // --- Error Handling ---
-    validationError: Annotation<string | null>(),
-    retries: Annotation<number>(),
+    summaryValidationError: Annotation<string | null>(),
+    summaryRetries: Annotation<number>(),
 });
 
 /**

@@ -25,7 +25,7 @@ export const ValuesFitStateAnnotation = Annotation.Root({
     /**
      * A unique ID to trace this run through the logs.
      */
-    traceId: Annotation<string | null>(),
+    valuesTraceId: Annotation<string | null>(),
 
     // --- Output ---
     /**
@@ -34,8 +34,8 @@ export const ValuesFitStateAnnotation = Annotation.Root({
     parsedValuesFit: Annotation<ValuesFitOutput | null>(),
 
     // --- Error Handling ---
-    validationError: Annotation<string | null>(),
-    retries: Annotation<number>(),
+    valuesValidationError: Annotation<string | null>(),
+    valuesRetries: Annotation<number>(),
 });
 
 /**

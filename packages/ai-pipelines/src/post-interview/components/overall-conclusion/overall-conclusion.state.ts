@@ -41,7 +41,7 @@ export const OverallConclusionStateAnnotation = Annotation.Root({
 
     // --- Internal ---
     rawOverallConclusion: Annotation<string | null>(),
-    traceId: Annotation<string | null>(),
+    conclusionTraceId: Annotation<string | null>(),
 
     // --- Output ---
     /**
@@ -50,8 +50,8 @@ export const OverallConclusionStateAnnotation = Annotation.Root({
     parsedOverallConclusion: Annotation<OverallConclusionOutput | null>(),
 
     // --- Error Handling ---
-    validationError: Annotation<string | null>(),
-    retries: Annotation<number>(),
+    conclusionValidationError: Annotation<string | null>(),
+    conclusionRetries: Annotation<number>(),
 });
 
 /**

@@ -20,7 +20,7 @@ JSON output format:
   "location": "The candidate's stated location (e.g., 'City, Country'). Omit if not found.",
   "summary": "A concise summary of the candidate (education, key experience) based on the CV.",
   "skills": ["A comprehensive list of all skills, technologies, or methodologies explicitly mentioned."],
-  "yearsOfExperience": "The approximate total number of years of relevant professional experience. Omit if not found."
+  "yearsOfExperience": 5
 }}
 `;
 
