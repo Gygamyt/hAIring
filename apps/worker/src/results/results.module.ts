@@ -9,7 +9,6 @@ import { DownloadService } from './download.service';
 import { TranscriptionOrchestrationService } from './transcription-orchestration.service';
 import { AiAnalysisService } from './ai-analysis.service';
 import { AiCoreModule } from "@hairing/nest-ai";
-// TODO: Import AiPipelinesModule when ready
 
 @Module({
     imports: [
@@ -18,7 +17,6 @@ import { AiCoreModule } from "@hairing/nest-ai";
         TranscriptionModule,
         DocumentParserModule,
         AiCoreModule,
-        // TODO: Add AiPipelinesModule later
     ],
     providers: [
         ResultsProcessor,

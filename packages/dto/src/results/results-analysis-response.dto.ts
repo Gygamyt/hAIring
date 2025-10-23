@@ -6,8 +6,8 @@ import {
     IsOptional,
     IsNumber,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 // -------------------------------------------------------------------
 // --- DTOs for each AI Subgraph -------------------------------------
@@ -259,7 +259,7 @@ class FullReportDto {
 }
 
 // -------------------------------------------------------------------
-// --- API Envelope (Remains unchanged) ------------------------------
+// --- API Envelope --------------------------------------------------
 // -------------------------------------------------------------------
 
 export class ResultsAnalysisResponseDto {

@@ -22,6 +22,7 @@ services:
       - /app/packages/nest-ai/node_modules
       - /app/packages/transcription/node_modules
       - /app/packages/utils/node_modules
+      - /app/packages/dto/node_modules
     networks:
       - hairing_net
     depends_on:
@@ -63,6 +64,7 @@ services:
       - /app/packages/transcription/node_modules
       - /app/packages/document-parser/node_modules
       - /app/packages/utils/node_modules
+      - /app/packages/dto/node_modules
     networks:
       - hairing_net
     depends_on:
