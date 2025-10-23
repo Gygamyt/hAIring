@@ -3,32 +3,40 @@ import { PromptTemplate } from '@langchain/core/prompts';
 // --- Generate Prompt ---
 
 const GENERATE_PROMPT_TEMPLATE = `
-You are an expert AI assistant, acting as a senior technical interviewer.
-Your task is to evaluate a candidate's technical skills based *only* on the provided interview transcript and a list of key topics discussed.
+You are an expert Senior Technical Interviewer.
+Your task is to analyze an interview transcript against a list of key technical topics that were supposed to be discussed.
 
-First, review the key technical topics.
-Next, analyze the interview transcript, paying close attention to the candidate's answers related to these topics.
+**Input 1: Key Topics**
+(This is the list of topics you must evaluate)
+{topics}
 
-KEY TOPICS:
----
-{topicList}
----
-
-INTERVIEW TRANSCRIPT:
----
+**Input 2: Interview Transcript**
+(This is the candidate's performance)
 {transcript}
----
 
-Based *only* on the transcript, evaluate the candidate's technical depth, practical experience (e.g., "I did..." vs "One could..."), and problem-solving skills.
+---
+Based *only* on the inputs above, your tasks are:
+1.  **Iterate** through *each* topic in the **Key Topics** list.
+2.  Find where this topic was discussed in the **Interview Transcript**.
+3.  Assign a grade and a brief justification for the candidate's answer *for that specific topic*.
+4.  Provide an *overall* assessment of the candidate's technical skills.
+
 Generate a JSON object that strictly adheres to the following format.
 
 JSON output format:
 {{
-  "overallScore": "A score from 1 (Poor) to 10 (Excellent), based on the technical answers.",
-  "knowledgeDepth": "superficial" | "moderate" | "deep",
-  "practicalExperience": "lacking" | "mentioned" | "demonstrated",
-  "problemSolving": "weak" | "average" | "strong",
-  "summary": "A detailed summary of technical skills, highlighting specific strengths (e.g., 'Good answer on microservices') and weaknesses ('Struggled with databases') with examples from the transcript."
+  "knowledgeDepth": "very-deep" | "deep" | "moderate" | "superficial" | "none",
+  "practicalExperience": "extensive" | "demonstrated" | "theoretical" | "none",
+  "problemSolving": "excellent" | "good" | "average" | "weak" | "none",
+  "summary": "A high-level summary of the candidate's overall technical performance, synthesizing all topics.",
+  "topicAssessments": [
+    {{
+      "topic": "Name of the topic from the input list (e.g., 'Test Automation')",
+      "grade": "Excellent" | "Good" | "Moderate" | "Weak" | "Not Assessed",
+      "summary": "Brief justification for the grade based on their answer for this specific topic. (e.g., 'Candidate provided a very strong, structured answer covering benefits and contexts like CI/CD.'). If not discussed, state 'Candidate was not asked about this topic.' and set grade to 'Not Assessed'."
+    }},
+    // ... (repeat for *every* topic in the Key Topics list)
+  ]
 }}
 `;
 
@@ -37,7 +45,7 @@ JSON output format:
  */
 export const createTechnicalAssessmentGeneratePrompt = () => {
     return new PromptTemplate({
-        inputVariables: ['transcript', 'topicList'],
+        inputVariables: ['transcript', 'topics'],
         template: GENERATE_PROMPT_TEMPLATE,
     });
 };

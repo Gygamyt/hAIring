@@ -1,123 +1,266 @@
-import { IsArray, IsBoolean, IsNotEmpty, IsString, ValidateNested } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
+import {
+    IsArray,
+    IsBoolean,
+    IsString,
+    ValidateNested,
+    IsOptional,
+    IsNumber,
+} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
-class CandidateInfoDto {
-    @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    full_name!: string;
+// -------------------------------------------------------------------
+// --- DTOs for each AI Subgraph -------------------------------------
+// -------------------------------------------------------------------
 
-    @ApiProperty()
-    @IsString()
-    experience_years!: string;
-
-    @ApiProperty({ type: [String] })
-    @IsArray()
-    @IsString({ each: true })
-    tech_stack!: string[];
-
-    @ApiProperty({ type: [String] })
-    @IsArray()
-    @IsString({ each: true })
-    projects!: string[];
-
-    @ApiProperty({ type: [String] })
-    @IsArray()
-    @IsString({ each: true })
-    domains!: string[];
-
-    @ApiProperty({ type: [String] })
-    @IsArray()
-    @IsString({ each: true })
-    tasks!: string[];
-}
-
-class InterviewAnalysisDto {
+class TopicsDto {
     @ApiProperty({ type: [String] })
     @IsArray()
     @IsString({ each: true })
     topics!: string[];
+}
+
+class CvSummaryDto {
+    @ApiProperty()
+    @IsString()
+    fullName!: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    location?: string;
 
     @ApiProperty()
     @IsString()
-    tech_assignment!: string;
+    summary!: string;
+
+    @ApiProperty({ type: [String] })
+    @IsArray()
+    @IsString({ each: true })
+    skills!: string[];
+
+    @ApiProperty({ required: false, type: Number })
+    @IsOptional()
+    @IsNumber()
+    yearsOfExperience?: number;
+}
+
+class AssessedValueDto {
+    @ApiProperty()
+    @IsString()
+    value!: string;
+
+    @ApiProperty()
+    @IsString() // Using IsString for the enum
+    match!: string; // "low" | "medium" | "high" | "not_discussed"
 
     @ApiProperty()
     @IsString()
-    knowledge_assessment!: string;
+    evidence!: string;
 }
 
 class CommunicationSkillsDto {
     @ApiProperty()
     @IsString()
-    assessment!: string;
+    summary!: string;
+
+    @ApiProperty()
+    @IsNumber()
+    overallScore!: number;
+
+    @ApiProperty()
+    @IsString() // Using IsString is fine for enums from the AI
+    clarity!: string; // "poor" | "average" | "good" | "excellent"
+
+    @ApiProperty()
+    @IsString()
+    structure!: string; // "average" | "unstructured" | "well-structured"
+
+    @ApiProperty()
+    @IsString()
+    engagement!: string; // "low" | "medium" | "high"
 }
 
-class ForeignLanguagesDto {
+class ValuesFitDto {
     @ApiProperty()
     @IsString()
-    assessment!: string;
+    overallSummary!: string;
+
+    @ApiProperty({ type: [AssessedValueDto] })
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => AssessedValueDto)
+    assessedValues!: AssessedValueDto[];
 }
 
-class FinalConclusionDto {
+class TopicAssessmentDetailDto {
     @ApiProperty()
     @IsString()
-    recommendation!: string;
+    topic!: string;
 
     @ApiProperty()
     @IsString()
-    assessed_level!: string;
+    grade!: string; // 'Excellent', 'Good', 'Moderate', 'Weak', 'Not Assessed'
 
     @ApiProperty()
     @IsString()
     summary!: string;
 }
 
-class FullReportDto {
+class TechnicalAssessmentDto {
     @ApiProperty()
     @IsString()
-    ai_summary!: string;
+    knowledgeDepth!: string; // 'very-deep', 'deep', 'moderate', ...
 
     @ApiProperty()
+    @IsString()
+    practicalExperience!: string; // 'extensive', 'demonstrated', ...
+
+    @ApiProperty()
+    @IsString()
+    problemSolving!: string; // 'excellent', 'good', ...
+
+    @ApiProperty()
+    @IsString()
+    summary!: string;
+
+    @ApiProperty({ type: [TopicAssessmentDetailDto] })
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => TopicAssessmentDetailDto)
+    topicAssessments!: TopicAssessmentDetailDto[];
+}
+
+class LanguageAssessmentDto {
+    @ApiProperty()
+    @IsBoolean()
+    assessmentSkipped!: boolean;
+
+    // --- Fields for a completed assessment ---
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    summary?: string; // AI calls it 'summary', not 'assessment'
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    overallLevel?: string; // AI calls it 'overallLevel', not 'level'
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    fluency?: string; // new field
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    vocabulary?: string; // new field
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    pronunciation?: string; // new field
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    reason?: string;
+}
+
+class AiSummaryDto {
+    @ApiProperty()
+    @IsString()
+    overallSummary!: string;
+
+    @ApiProperty({ type: [String] })
+    @IsArray()
+    @IsString({ each: true })
+    keyStrengths!: string[];
+
+    @ApiProperty({ type: [String] })
+    @IsArray()
+    @IsString({ each: true })
+    keyWeaknesses!: string[];
+}
+
+class OverallConclusionDto {
+    @ApiProperty()
+    @IsString()
+    recommendation!: string; // 'Strong Hire', 'Hire', 'Consider', 'No Hire'
+
+    @ApiProperty()
+    @IsString()
+    finalJustification!: string;
+
+    @ApiProperty({ type: [String] })
+    @IsArray()
+    @IsString({ each: true })
+    keyPositives!: string[];
+
+    @ApiProperty({ type: [String] })
+    @IsArray()
+    @IsString({ each: true })
+    keyConcerns!: string[];
+}
+
+// -------------------------------------------------------------------
+// --- Main Full Report DTO (matches AI output) ----------------------
+// -------------------------------------------------------------------
+
+class FullReportDto {
+    @ApiProperty({ required: false })
     @ValidateNested()
-    @Type(() => CandidateInfoDto)
-    candidate_info!: CandidateInfoDto;
+    @Type(() => TopicsDto)
+    @IsOptional()
+    topics?: TopicsDto;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @ValidateNested()
-    @Type(() => InterviewAnalysisDto)
-    interview_analysis!: InterviewAnalysisDto;
+    @Type(() => CvSummaryDto)
+    @IsOptional()
+    cvSummary?: CvSummaryDto;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @ValidateNested()
     @Type(() => CommunicationSkillsDto)
-    communication_skills!: CommunicationSkillsDto;
+    @IsOptional()
+    communicationSkills?: CommunicationSkillsDto;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @ValidateNested()
-    @Type(() => ForeignLanguagesDto)
-    foreign_languages!: ForeignLanguagesDto;
+    @Type(() => ValuesFitDto)
+    @IsOptional()
+    valuesFit?: ValuesFitDto;
 
-    @ApiProperty()
-    @IsString()
-    team_fit!: string;
-
-    @ApiProperty({ type: [String] })
-    @IsArray()
-    @IsString({ each: true })
-    additional_information!: string[];
-
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @ValidateNested()
-    @Type(() => FinalConclusionDto)
-    conclusion!: FinalConclusionDto;
+    @Type(() => TechnicalAssessmentDto)
+    @IsOptional()
+    technicalAssessment?: TechnicalAssessmentDto;
 
-    @ApiProperty({ type: [String] })
-    @IsArray()
-    @IsString({ each: true })
-    recommendations_for_candidate!: string[];
+    @ApiProperty({ required: false })
+    @ValidateNested()
+    @Type(() => LanguageAssessmentDto)
+    @IsOptional()
+    languageAssessment?: LanguageAssessmentDto;
+
+    @ApiProperty({ required: false })
+    @ValidateNested()
+    @Type(() => AiSummaryDto)
+    @IsOptional()
+    aiSummary?: AiSummaryDto;
+
+    @ApiProperty({ required: false })
+    @ValidateNested()
+    @Type(() => OverallConclusionDto)
+    @IsOptional()
+    overallConclusion?: OverallConclusionDto;
 }
+
+// -------------------------------------------------------------------
+// --- API Envelope (Remains unchanged) ------------------------------
+// -------------------------------------------------------------------
 
 export class ResultsAnalysisResponseDto {
     @ApiProperty()
@@ -128,8 +271,9 @@ export class ResultsAnalysisResponseDto {
     @IsBoolean()
     success!: boolean;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @ValidateNested()
     @Type(() => FullReportDto)
-    report!: FullReportDto;
+    @IsOptional()
+    report?: FullReportDto;
 }

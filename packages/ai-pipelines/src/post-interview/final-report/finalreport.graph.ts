@@ -15,6 +15,10 @@ import { reportBuilderNode } from "./finalreport.nodes";
 
 const logger = new Logger('FinalReportGraph');
 
+//todo add grade fot interviewer
+//todo add vocabulary
+//todo fix topic list
+
 // --------------------------------------------------------------------------------
 // --- Graph Definition -----------------------------------------------------------
 // --------------------------------------------------------------------------------
@@ -60,8 +64,13 @@ export const createFinalReportSubgraph = (llm: ChatGoogleGenerativeAI) => {
 
             if (subgraphName === 'topicExtractor') {
                 const topicsObject = subGraphResponse.extractedTopics as { topics?: string[] };
+                logger.log(
+                    `${chalk.magenta('--- DEBUG LOG (TopicExtractor Adapter) ---')} | ${chalk.yellow(
+                        'Raw extractedTopics object:',
+                    )} ${JSON.stringify(topicsObject)}`,
+                );
                 // @ts-ignore
-                output.topics = topicsObject?.topics ?? [];
+                output.topicList = topicsObject?.topics ?? [];
                 // @ts-ignore
                 delete output.extractedTopics;
             }

@@ -82,56 +82,17 @@ export class AiAnalysisService {
             const finalReport = finalReportState.finalReport as FullReportDto;
 
             this.logger.log(
-                `[Job ${parentJobId}] (AiAnalysisService) Mapping AI DTO to API Response DTO...`,
+                `${chalk.blue(
+                    `[Job ${parentJobId}] (AiAnalysisService) AI Pipeline successful. Report generated:`,
+                )}`,
             );
+            this.logger.log(JSON.stringify(finalReport, null, 2));
 
             const finalResponse: ResultsAnalysisResponseDto = {
                 message: 'Analysis pipeline completed successfully.',
                 success: true,
-                report: {
-                    ai_summary: finalReport.aiSummary?.overallSummary ?? 'N/A',
-                    candidate_info: {
-                        full_name: finalReport.cvSummary?.fullName ?? 'N/A',
-                        experience_years:
-                            finalReport.cvSummary?.yearsOfExperience?.toString() ??
-                            'N/A',
-                        tech_stack: finalReport.cvSummary?.skills ?? [],
-                        projects: [],
-                        domains: [],
-                        tasks: [],
-                    },
-                    interview_analysis: {
-                        topics: finalReport.topics?.topics ?? [],
-                        tech_assignment:
-                            finalReport.technicalAssessment?.summary ?? 'N/A',
-                        knowledge_assessment:
-                            finalReport.technicalAssessment?.summary ?? 'N/A',
-                    },
-                    communication_skills: {
-                        assessment:
-                            finalReport.communicationSkills?.summary ?? 'N/A',
-                    },
-                    foreign_languages: {
-                        assessment:
-                            finalReport.languageAssessment?.summary ?? 'N/A',
-                    },
-                    team_fit: finalReport.valuesFit?.summary ?? 'N/A',
-                    additional_information: [],
-                    conclusion: {
-                        recommendation:
-                            finalReport.overallConclusion?.recommendation ??
-                            'N/A',
-                        assessed_level:
-                            finalReport.overallConclusion?.recommendation ?? 'N/A',
-                        summary:
-                            finalReport.overallConclusion?.summary ?? 'N/A',
-                    },
-                    recommendations_for_candidate:
-                        finalReport.overallConclusion?.feedbackForCandidate ?? [],
-                },
+                report: finalReport,
             };
-
-            this.logger.log(JSON.stringify(finalReport, null, 2));
 
             this.logger.log(
                 `${chalk.green(
@@ -139,15 +100,17 @@ export class AiAnalysisService {
                 )}`,
             );
             return finalResponse;
+
         } catch (error: any) {
             this.logger.error(
                 `[Job ${parentJobId}] (AiAnalysisService) AI Step failed: ${error.message}`,
                 error.stack,
             );
+
             return {
                 message: `AI pipeline failed: ${error.message}`,
                 success: false,
-                report: null as any,
+                report: undefined,
             };
         }
     }

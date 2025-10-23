@@ -16,7 +16,8 @@
   "dependencies": {
     "docx": "^9.5.1",
     "mammoth": "^1.11.0",
-    "pdf-parse": "^2.3.11"
+    "pdf-parse": "^2.3.11",
+    "pdf2json": "^4.0.0"
   },
   "devDependencies": {
     "@hairing/config-jest": "workspace:^",

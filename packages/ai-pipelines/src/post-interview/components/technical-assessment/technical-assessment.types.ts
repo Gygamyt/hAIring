@@ -1,44 +1,39 @@
 import { z } from 'zod';
 
+const TopicAssessmentDetailSchema = z.object({
+    topic: z.string().describe('The name of the topic being assessed.'),
+    grade: z
+        .enum(['Excellent', 'Good', 'Moderate', 'Weak', 'Not Assessed'])
+        .describe("The candidate's grade for this specific topic."),
+    summary: z
+        .string()
+        .describe('Brief justification for the grade for this topic.'),
+});
+
 /**
  * Defines the structured output for the TechnicalAssessment subgraph.
- * This DTO captures the analysis of the candidate's technical skills
- * based on their answers in the interview transcript.
  */
 export const TechnicalAssessmentOutputSchema = z.object({
-    overallScore: z
-        .number()
-        .min(1)
-        .max(10)
-        .describe(
-            'Overall technical skill score from 1 (Poor) to 10 (Excellent), based on the transcript.',
-        ),
-
-    knowledgeDepth: z
-        .enum(['superficial', 'moderate', 'deep'])
-        .describe(
-            'Assessment of the depth of theoretical knowledge demonstrated.',
-        ),
-
-    practicalExperience: z
-        .enum(['lacking', 'mentioned', 'demonstrated'])
-        .describe(
-            'Assessment of practical, hands-on experience (e.g., "I did..." vs "One could...").',
-        ),
-
-    problemSolving: z
-        .enum(['weak', 'average', 'strong'])
-        .describe(
-            'Assessment of the candidate\'s problem-solving skills, if applicable.',
-        ),
-
+    knowledgeDepth: z.enum([
+        'very-deep',
+        'deep',
+        'moderate',
+        'superficial',
+        'none',
+    ]),
+    practicalExperience: z.enum(['extensive', 'demonstrated', 'theoretical', 'none']),
+    problemSolving: z.enum(['excellent', 'good', 'average', 'weak', 'none']),
     summary: z
         .string()
         .describe(
-            'A detailed summary of technical skills, highlighting specific strengths (e.g., "Good answer on microservices") and weaknesses ("Struggled with databases") with examples.',
+            'A high-level summary of the candidate\'s overall technical performance.',
+        ),
+
+    topicAssessments: z
+        .array(TopicAssessmentDetailSchema)
+        .describe(
+            'An array of assessments for each specific topic provided in the input.',
         ),
 });
 
-export type TechnicalAssessmentOutput = z.infer<
-    typeof TechnicalAssessmentOutputSchema
->;
+export type TechnicalAssessmentOutput = z.infer<typeof TechnicalAssessmentOutputSchema>;

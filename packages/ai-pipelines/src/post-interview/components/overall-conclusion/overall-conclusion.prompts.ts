@@ -9,6 +9,11 @@ DO NOT analyze the raw transcript. Your decision must be based *only* on the str
 
 **Key Task:** Compare the candidate's CV (Input 1) against their actual performance in the interview (Inputs 2-6) to identify matches or discrepancies.
 
+**Critical Assessment Rules:**
+1.  **Discrepancies are Dealbreakers:** A significant discrepancy between the CV (e.g., claiming 'clear communication' or 'API skills') and the interview performance (e.g., failing to communicate in English, failing a basic GraphQL question) is a major red flag. It indicates inflated experience or poor self-awareness and MUST heavily weigh against a 'Hire' recommendation.
+2.  **Core Skill Failure:** A critical failure in a required skill (like the specified language of communication) MUST result in a 'No Hire' or 'Consider' recommendation, even if other technical areas are strong.
+3.  **Weighting:** Your final justification MUST explain how these 'keyConcerns' weigh against the 'keyPositives'. Do not recommend 'Hire' if a candidate fails a critical, non-negotiable requirement.
+
 **Input 1: CV Summary**
 {parsedCv}
 

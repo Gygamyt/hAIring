@@ -25,7 +25,6 @@ export const FinalReportStateSchema = {
     graphError: Annotation<string | null>(),
 
     // --- Fields for TopicExtractor ---
-    // (Предполагаем, что TopicExtractorState имеет `topics: string[] | null`)
     topics: Annotation<string[] | null>(),
     rawTopics: Annotation<string | null>(),
     topicsError: Annotation<string | null>(),

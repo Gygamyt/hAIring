@@ -37,18 +37,22 @@ export const createTechnicalAssessmentGenerateNode =
         async (
             state: ITechnicalAssessmentState,
         ): Promise<Partial<ITechnicalAssessmentState>> => {
-            const traceId = uuidv4();
+            const techTraceId = uuidv4();
             logger.log(
                 `${chalk.blue('Node Started')} ${chalk.green('for node:')} ${chalk.yellow(
                     'GenerateNode',
-                )} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceId}`)}`,
+                )} ${chalk.green('|')} ${chalk.gray(`TraceID: ${techTraceId}`)}`,
             );
-
+            logger.log(
+                `${chalk.magenta('--- DEBUG LOG (TechnicalAssessment Node) ---')} | ${chalk.yellow(
+                    'Received topics:',
+                )} ${JSON.stringify(state.topicList)}`,
+            );
             const chain = createTechnicalAssessmentGeneratePrompt().pipe(llm);
             const result = await chain.invoke(
                 {
                     transcript: state.transcript,
-                    topicList: state.topicList ?? [],
+                    topics: state.topicList ?? [],
                 },
                 { metadata: { node: 'TechnicalAssessmentGenerateNode' } },
             );
@@ -56,14 +60,14 @@ export const createTechnicalAssessmentGenerateNode =
             logger.log(
                 `${chalk.cyan('Node Finished')} ${chalk.green('for node:')} ${chalk.yellow(
                     'GenerateNode',
-                )} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceId}`)}`,
+                )} ${chalk.green('|')} ${chalk.gray(`TraceID: ${techTraceId}`)}`,
             );
 
             return {
                 rawTechnicalAssessment: getRawContent(result, logger),
-                traceId,
-                retries: 0,
-                validationError: null,
+                techTraceId,
+                techRetries: 0,
+                techValidationError: null,
                 parsedTechnicalAssessment: null,
             };
         };
@@ -78,7 +82,7 @@ export const validateTechnicalAssessmentNode = (
     validationError?: string | null;
     retries?: number;
 } => {
-    const traceId = state.traceId as string;
+    const traceId = state.techTraceId as string;
     logger.log(
         `${chalk.blue('Node Validating')} ${chalk.green('for node:')} ${chalk.yellow(
             'ValidateNode',
@@ -100,7 +104,7 @@ export const validateTechnicalAssessmentNode = (
         );
         return {
             validationError: error,
-            retries: (state.retries as number | null ?? 0) + 1,
+            retries: (state.techRetries as number | null ?? 0) + 1,
         };
     }
 
@@ -122,7 +126,7 @@ export const createTechnicalAssessmentFixNode =
         async (
             state: ITechnicalAssessmentState,
         ): Promise<Partial<ITechnicalAssessmentState>> => {
-            const traceId = state.traceId as string;
+            const traceId = state.techTraceId as string;
             logger.log(
                 `${chalk.blue('Node Started (Fixing)')} ${chalk.green(
                     'for node:',
@@ -134,7 +138,7 @@ export const createTechnicalAssessmentFixNode =
             const chain = createTechnicalAssessmentFixPrompt().pipe(llm);
             const result = await chain.invoke(
                 {
-                    validationError: state.validationError,
+                    validationError: state.techValidationError,
                     invalidOutput: state.rawTechnicalAssessment,
                 },
                 { metadata: { node: 'TechnicalAssessmentFixNode' } },
@@ -150,7 +154,7 @@ export const createTechnicalAssessmentFixNode =
 
             return {
                 rawTechnicalAssessment: getRawContent(result, logger),
-                validationError: null, // Reset error before re-validation
+                techValidationError: null, // Reset error before re-validation
             };
         };
 
