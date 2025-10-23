@@ -1,8 +1,8 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import chalk from 'chalk';
 import { CompiledStateGraph, TOPIC_EXTRACTOR_PROVIDER } from "@hairing/nest-ai";
-import { ExtractedTopics, TopicExtractorState } from "@hairing/ai-pipelines/src/post-interview/topic-extractor";
 import { ResultsAnalysisResponseDto } from "@hairing/dto/src";
+import { ExtractedTopics, TopicExtractorState } from "@hairing/ai-pipelines/src/post-interview/components/topic-extractor";
 
 @Injectable()
 export class AiAnalysisService {
