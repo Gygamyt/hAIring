@@ -1,20 +1,52 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PreparationTab } from '@/features/preparation/PreparationTab';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
-export default function DashboardPage() {
+function ResultsTabPlaceholder() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Панель управления</CardTitle>
+                <CardTitle>Анализ результатов (Видео)</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <p>Вы успешно вошли в приложение!</p>
-                <p>Здесь будет основная логика (анализ, подготовка и т.д.).</p>
+            <CardContent>
+                <p>Здесь будет логика анализа видео-интервью.</p>
+            </CardContent>
+        </Card>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold">Панель управления</h1>
                 <Button asChild variant="outline">
                     <Link to="/">Выйти (на Home)</Link>
                 </Button>
-            </CardContent>
-        </Card>
+            </div>
+
+            <Tabs defaultValue="preparation" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="preparation">
+                        Подготовка (CV + Фидбек)
+                    </TabsTrigger>
+                    <TabsTrigger value="results">
+                        Анализ (Видео-интервью)
+                    </TabsTrigger>
+                </TabsList>
+
+                {/* Вкладка 1: Подготовка */}
+                <TabsContent value="preparation" className="mt-4">
+                    <PreparationTab />
+                </TabsContent>
+
+                {/* Вкладка 2: Анализ */}
+                <TabsContent value="results" className="mt-4">
+                    <ResultsTabPlaceholder />
+                </TabsContent>
+            </Tabs>
+        </div>
     );
 }

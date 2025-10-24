@@ -72,5 +72,9 @@
     }
     body {
         @apply bg-background text-foreground;
+
+        @apply bg-gradient-to-br from-slate-950 to-blue-950;
+
+        @apply min-h-screen;
     }
 }
