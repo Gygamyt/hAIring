@@ -1,10 +1,9 @@
 import { useAnalyzePreparation } from '@/api/useAnalyzePreparation';
 import { PreparationForm } from './PreparationForm';
 import { PreparationResults } from './PreparationResults';
-import { Progress } from '@/components/ui/progress';
+import { Loader2 } from 'lucide-react';
 
 export const PreparationTab = () => {
-    // Наш кастомный хук React Query
     const { mutate, data, isPending, reset } = useAnalyzePreparation();
 
     const handleSubmit = (formData: {
@@ -12,7 +11,6 @@ export const PreparationTab = () => {
         feedbackText: string;
         requirementsLink: string;
     }) => {
-        // Если уже есть старые данные, очищаем их перед новым запросом
         if (data) {
             reset();
         }
@@ -21,24 +19,25 @@ export const PreparationTab = () => {
 
     return (
         <div className="container mx-auto p-4">
-            {/* 1. Форма (передаем ей функцию 'handleSubmit' и статус загрузки) */}
-            {!data && (
+            {!data && !isPending && (
                 <PreparationForm
                     onSubmit={handleSubmit}
                     isLoading={isPending}
                 />
             )}
 
-            {/* 2. Индикатор загрузки */}
             {isPending && (
-                <div className="text-center py-10">
-                    <p className="mb-4">Идет анализ... Это может занять несколько минут.</p>
-                    {/* Прогресс-бар без 'value' будет анимироваться (indeterminate) */}
-                    <Progress className="w-1/2 mx-auto" />
+                <div className="text-center py-20 flex flex-col items-center justify-center min-h-[40vh]">
+                    <Loader2 className="w-16 h-16 animate-spin text-primary mb-6" />
+                    <p className="text-lg font-semibold mb-2 text-foreground">
+                        Идет анализ CV...
+                    </p>
+                    <p className="text-muted-foreground">
+                        Это займет около 30 секунд.
+                    </p>
                 </div>
             )}
 
-            {/* 3. Результаты (показываем, когда загрузка завершена и есть данные) */}
             {data && !isPending && (
                 <PreparationResults report={data.report} />
             )}

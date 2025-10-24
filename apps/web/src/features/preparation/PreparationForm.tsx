@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Brain, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Схема валидации
 const formSchema = z.object({
     requirementsLink: z.string().url('Неверная ссылка на Google-таблицу'),
     feedbackText: z.string().min(1, 'Фидбэк не может быть пустым'),
@@ -79,7 +78,6 @@ export const PreparationForm = ({ onSubmit, isLoading }: PreparationFormProps) =
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {/* ... (Drag-n-Drop Div) ... */}
                     <div>
                         <Label htmlFor="cv-file">CV кандидата (.txt, .pdf, .docx)</Label>
                         <div
@@ -110,7 +108,6 @@ export const PreparationForm = ({ onSubmit, isLoading }: PreparationFormProps) =
                         </div>
                     </div>
 
-                    {/* ... (Feedback Textarea) ... */}
                     <div className="grid w-full gap-1.5">
                         <Label htmlFor="feedback-text">Фидбек от рекрутера</Label>
                         <Controller
@@ -128,7 +125,6 @@ export const PreparationForm = ({ onSubmit, isLoading }: PreparationFormProps) =
                         {errors.feedbackText && <p className="text-destructive text-sm">{errors.feedbackText.message}</p>}
                     </div>
 
-                    {/* ... (Requirements Input) ... */}
                     <div className="space-y-1.5">
                         <Label htmlFor="requirements">Требования к кандидату</Label>
                         <Controller

@@ -1,4 +1,3 @@
-// src/features/preparation/PreparationResults.tsx
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -84,13 +83,11 @@ export const PreparationResults = ({ report }: PreparationResultsProps) => {
                     </Table>
                 </div>
 
-                {/* Общий вывод */}
                 <h3 className="font-bold text-lg mt-4 mb-2">Общий вывод</h3>
                 <p className="text-sm text-foreground/90">
                     {report.conclusion.summary}
                 </p>
 
-                {/* Рекомендации */}
                 <h3 className="font-bold text-lg mt-4 mb-2">
                     Рекомендации по развитию
                 </h3>
@@ -98,7 +95,6 @@ export const PreparationResults = ({ report }: PreparationResultsProps) => {
                     {report.conclusion.recommendations}
                 </p>
 
-                {/* Темы для интервью */}
                 <h3 className="font-bold text-lg mt-4 mb-2">
                     Темы для технического интервью
                 </h3>
@@ -110,7 +106,6 @@ export const PreparationResults = ({ report }: PreparationResultsProps) => {
                     )}
                 </ul>
 
-                {/* Соответствие ценностям */}
                 <h3 className="font-bold text-lg mt-4 mb-2">
                     Соответствие ценностям компании
                 </h3>
