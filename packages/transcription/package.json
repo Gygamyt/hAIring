@@ -1,0 +1,27 @@
+{
+  "name": "@hairing/transcription",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/config": "^3.0.0",
+    "@nestjs/core": "^10.0.0"
+  },
+  "dependencies": {
+    "@hairing/utils": "workspace:^",
+    "assemblyai": "^4.18.0",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@hairing/config-tsconfig": "workspace:^"
+  }
+}

@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+**/node_modules
+
+# Turbo
+.turbo
+
+# IDE
+.idea
+.vscode
+
+# Build artifacts (мы их создаем внутри Docker)
+dist
+**/dist
+.next
+**/.next
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env files (лучше передавать через docker-compose)
+.env
+.env.*
+!.env.example
+
+# Test results
+coverage

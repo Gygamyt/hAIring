@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  api:
+    container_name: hairing_api_dev
+    build:
+      context: .
+      dockerfile: apps/api/Dev.dockerfile
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+
+      - /app/apps/api/node_modules
+      - /app/packages/ai-core/node_modules
+      - /app/packages/ai-pipelines/node_modules
+      - /app/packages/document-parser/node_modules
+      - /app/packages/google-drive/node_modules
+      - /app/packages/nest-ai/node_modules
+      - /app/packages/transcription/node_modules
+      - /app/packages/utils/node_modules
+      - /app/packages/dto/node_modules
+    networks:
+      - hairing_net
+    depends_on:
+      - mongo
+      - redis
+
+  web:
+    container_name: hairing_web_dev
+    build:
+      context: .
+      dockerfile: apps/web/Dev.dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      - /app/apps/web/node_modules
+      - /app/packages/ui/node_modules
+      - /app/packages/types/node_modules
+    networks:
+      - hairing_net
+    # depends_on:
+    #   - api
+
+  worker:
+    container_name: hairing_worker_dev
+    build:
+      context: .
+      dockerfile: apps/worker/Dev.dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./apps/worker:/app/apps/worker
+      - ./packages:/app/packages
+      - /app/apps/worker/node_modules
+      - /app/packages/ai-pipelines/node_modules
+      - /app/packages/nest-ai/node_modules
+      - /app/packages/google-drive/node_modules
+      - /app/packages/transcription/node_modules
+      - /app/packages/document-parser/node_modules
+      - /app/packages/utils/node_modules
+      - /app/packages/dto/node_modules
+    networks:
+      - hairing_net
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: hairing_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hairing_net
+
+  mongo:
+    image: mongo:6
+    container_name: hairing_mongo_dev
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: your_user
+      MONGO_INITDB_ROOT_PASSWORD: your_password
+      MONGO_INITDB_DATABASE: your_db
+    volumes:
+      - mongo_data:/data/db
+      # - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - hairing_net
+
+networks:
+  hairing_net:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
+  mongo_data:
+    driver: local

@@ -1,0 +1,27 @@
+{
+  "name": "@hairing/ai-pipelines",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "jest --runInBand --logHeapUsage",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc --watch",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
+  },
+  "peerDependencies": {
+    "@hairing/config-jest": "workspace:^",
+    "@hairing/config-tsconfig": "workspace:^",
+    "@types/jest": "^29.5.2",
+    "@nestjs/common": "^11.1.6"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.78",
+    "@langchain/google-genai": "^0.2.18",
+    "@langchain/langgraph": "^0.4.9",
+    "langchain": "^0.3.36"
+  },
+  "devDependencies": {
+  }
+}

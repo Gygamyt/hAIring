@@ -1,0 +1,29 @@
+{
+  "name": "@hairing/document-parser",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc --watch",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.1.6"
+  },
+  "dependencies": {
+    "docx": "^9.5.1",
+    "mammoth": "^1.11.0",
+    "pdf-parse": "^2.3.11",
+    "pdf2json": "^4.0.0"
+  },
+  "devDependencies": {
+    "@hairing/config-jest": "workspace:^",
+    "@hairing/config-tsconfig": "workspace:^",
+    "@nestjs/testing": "^10.0.0",
+    "@types/jest": "^29.5.2",
+    "@types/pdf-parse": "^1.1.5"
+  }
+}

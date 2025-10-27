@@ -1,0 +1,13 @@
+{
+  "name": "@hairing/ui",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "type": "module",
+  "scripts": {
+    "clean": "rimraf dist",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage",
+    "dev": "tsc --watch"
+  }
+}

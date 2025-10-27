@@ -1,0 +1,7 @@
+{
+  "extends": "@hairing/config-tsconfig/nest.json",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@hairing/config-jest",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc --watch",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.2",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0"
+  }
+}

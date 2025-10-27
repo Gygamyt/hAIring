@@ -1,0 +1,27 @@
+{
+  "name": "@hairing/utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "peerDependencies": {
+    "@nestjs/common": "^11.1.6"
+  },
+  "devDependencies": {
+    "@hairing/config-tsconfig": "workspace:^",
+    "@types/cli-progress": "^3.11.6"
+  },
+  "scripts": {
+    "dev": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rimraf dist",
+    "clean:full": "rimraf dist .turbo tsconfig.tsbuildinfo coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gygamyt/hAIring.git"
+  },
+  "private": true,
+  "dependencies": {
+    "cli-progress": "^3.12.0"
+  }
+}
