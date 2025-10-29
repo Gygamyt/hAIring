@@ -8,4 +8,4 @@ RUN pnpm install --frozen-lockfile --prod=false
 COPY . .
 WORKDIR /app/apps/web
 EXPOSE 5173
-CMD ["pnpm", "run", "dev", "--", "--host"]
+CMD ["pnpm", "run", "dev", "--", "--host", "0.0.0.0"]
