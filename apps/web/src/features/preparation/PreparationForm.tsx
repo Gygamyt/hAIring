@@ -151,7 +151,7 @@ export const PreparationForm = ({ onSubmit, isLoading }: PreparationFormProps) =
                 <Button
                     type="submit"
                     disabled={isLoading}
-                    className="bg-gradient-primary hover:shadow-glow transition-all duration-300 px-8 py-6 text-lg"
+                    className="bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all duration-300 px-8 py-6 text-lg"
                     size="lg"
                 >
                     {isLoading ? (
