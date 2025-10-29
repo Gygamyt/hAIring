@@ -24,7 +24,7 @@ services:
     networks:
       - hairing_net
     depends_on:
-      - mongo
+#      - mongo
       - redis
 
   web:
@@ -78,20 +78,20 @@ services:
     networks:
       - hairing_net
 
-  mongo:
-    image: mongo:6
-    container_name: hairing_mongo_dev
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: your_user
-      MONGO_INITDB_ROOT_PASSWORD: your_password
-      MONGO_INITDB_DATABASE: your_db
-    volumes:
-      - mongo_data:/data/db
-      # - ./mongo-init:/docker-entrypoint-initdb.d
-    networks:
-      - hairing_net
+#  mongo:
+#    image: mongo:6
+#    container_name: hairing_mongo_dev
+#    ports:
+#      - "27017:27017"
+#    environment:
+#      MONGO_INITDB_ROOT_USERNAME: your_user
+#      MONGO_INITDB_ROOT_PASSWORD: your_password
+#      MONGO_INITDB_DATABASE: your_db
+#    volumes:
+#      - mongo_data:/data/db
+#      # - ./mongo-init:/docker-entrypoint-initdb.d
+#    networks:
+#      - hairing_net
 
 networks:
   hairing_net:
