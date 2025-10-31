@@ -49,10 +49,21 @@ export const createTechnicalAssessmentGenerateNode =
                 )} ${JSON.stringify(state.topicList)}`,
             );
             const chain = createTechnicalAssessmentGeneratePrompt().pipe(llm);
+
+            const topicsList = state.topicList ?? [] as any;
+
+            const formattedTopics = topicsList
+                .map((topic: any) => `- "${topic}"`)
+                .join('\n');
+
+            const topicsInput = formattedTopics.length > 0
+                ? formattedTopics
+                : 'No specific topics provided for assessment.';
+
             const result = await chain.invoke(
                 {
                     transcript: state.transcript,
-                    topics: state.topicList ?? [],
+                    topics: topicsInput, // <--- Передаем отформатированную строку
                 },
                 { metadata: { node: 'TechnicalAssessmentGenerateNode' } },
             );
@@ -154,7 +165,7 @@ export const createTechnicalAssessmentFixNode =
 
             return {
                 rawTechnicalAssessment: getRawContent(result, logger),
-                techValidationError: null, // Reset error before re-validation
+                techValidationError: null,
             };
         };
 

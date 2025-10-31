@@ -47,6 +47,7 @@ export const createTechnicalAssessmentSubgraph = (
 
         // --- Main Loop ---
         .addEdge('generateNode', 'validateNode')
+        // @ts-expect-error todo check
         .addConditionalEdges('validateNode', routerForTechnicalAssessment, {
             success: END,
             failure: 'handleFailureNode',

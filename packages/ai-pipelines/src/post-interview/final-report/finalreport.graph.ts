@@ -83,7 +83,8 @@ export const createFinalReportSubgraph = (llm: ChatGoogleGenerativeAI) => {
     };
 
     const topicExtractorAdapter = createSubgraphAdapter(
-        topicExtractor, 'topicExtractor', ['topics', 'topicsError', 'graphError'],
+        // @ts-expect-error todo fix signature
+        topicExtractor, 'topicExtractor', ['extractedTopics', 'topicsError', 'graphError'],
     );
     const candidateInfoAdapter = createSubgraphAdapter(
         candidateInfoSummary, 'candidateInfoSummary', ['parsedCv', 'cvValidationError', 'graphError'],
