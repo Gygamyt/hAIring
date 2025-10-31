@@ -42,8 +42,8 @@ services:
       - /app/packages/types/node_modules
     networks:
       - hairing_net
-    # depends_on:
-    #   - api
+    depends_on:
+      - api
 
   worker:
     container_name: hairing_worker_dev

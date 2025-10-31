@@ -19,9 +19,8 @@ import { JobStatusResponseDto } from './dto/job-status-response.dto';
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { AnalyzeResultsDto } from "./dto/analyze-results.dto";
-import { MetadataDto, ResultsAnalysisResponseDto } from "@hairing/dto/src";
 
-@ApiTags('Results Analysis (Pipeline 2)')
+@ApiTags('Results Analysis')
 @Controller('api/results')
 export class ResultsController {
     private readonly logger = new Logger(ResultsController.name);
@@ -33,7 +32,7 @@ export class ResultsController {
     @Post('/')
     @ApiConsumes('multipart/form-data')
     @ApiResponse({
-        status: 202, // 202 Accepted
+        status: 202,
         description: 'Analysis job has been accepted and queued.',
         type: JobStatusResponseDto,
     })
@@ -52,12 +51,11 @@ export class ResultsController {
     })
     @UseInterceptors(FileInterceptor('cv_file'))
     async startAnalysis(
-        @Body() body: AnalyzeResultsDto, // Your DTO for validation
-        @UploadedFile(new ParseFilePipe({ fileIsRequired: false })) // CV is optional
+        @Body() body: AnalyzeResultsDto,
+        @UploadedFile(new ParseFilePipe({ fileIsRequired: false }))
         cvFile?: Express.Multer.File,
     ): Promise<JobStatusResponseDto> {
 
-        // This job ID is the "Parent ID" for the entire workflow
         const parentJobId = uuidv4();
 
         const jobPayload = {
@@ -70,19 +68,17 @@ export class ResultsController {
             `Queueing job ${chalk.yellow('job-1-download')} (Parent ID: ${chalk.cyan(parentJobId)})`,
         );
 
-        // Add the FIRST job in our multi-step workflow
         await this.analysisQueue.add(
-            'job-1-download', // The first step
+            'job-1-download',
             {
                 parentJobId: parentJobId,
                 payload: jobPayload,
             },
             {
-                jobId: parentJobId, // Use our generated UUID as the main job ID
+                jobId: parentJobId,
             },
         );
 
-        // Immediately return the Job ID and "queued" status
         return {
             job_id: parentJobId,
             status: 'queued',
@@ -106,7 +102,7 @@ export class ResultsController {
         }
 
         const status = await job.getState();
-        const progress = job.progress as any; // (Это поле обновляет твой воркер)
+        const progress = job.progress as any;
 
         let currentStep = 'queued';
         if (status === 'active' || status === 'waiting' || status === 'delayed') {

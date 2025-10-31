@@ -86,7 +86,7 @@ export class GoogleDriveService implements OnModuleInit {
      */
     async downloadFileToTemp(link: string, outputPath: string, totalSize: number): Promise<string> { // <-- Changed return type to Promise<string>
         const fileId = this.getFileIdFromLink(link);
-        // Added basename for clearer logging
+
         const fileName = path.basename(outputPath);
         this.logger.log(`Downloading file '${fileName}' (ID: ${fileId}) to ${outputPath} with progress.`);
 
@@ -95,29 +95,33 @@ export class GoogleDriveService implements OnModuleInit {
 
         try {
             const response = await this.drive.files.get(
-                { fileId, alt: 'media' },
+                {
+                    fileId, alt: 'media',
+                    supportsAllDrives: true
+                },
                 { responseType: 'stream' },
             );
             downloadStream = response.data as Readable;
 
-            // Wait for the download and progress to complete
             await pipeWithProgress(downloadStream, dest, totalSize, this.logger, `Downloading ${fileName}`);
 
-            // If pipeWithProgress resolves, the download is complete
             this.logger.log(`File '${fileName}' successfully downloaded to ${outputPath}`);
-            return outputPath; // <-- Return the output path on success
+            return outputPath;
 
         } catch (error: any) {
             this.logger.error(`Critical error downloading file '${fileName}' (ID: ${fileId}): ${error.message}`, error.stack);
             if (downloadStream) downloadStream.destroy();
             dest.close((closeErr) => {
-                if(closeErr) this.logger.error(`Error closing write stream for ${outputPath}: ${closeErr.message}`);
+                if (closeErr) this.logger.error(`Error closing write stream for ${outputPath}: ${closeErr.message}`);
                 if (fs.existsSync(outputPath)) {
-                    try { fs.unlinkSync(outputPath); } catch (e: any) { this.logger.warn(`Failed to cleanup partial file ${outputPath}: ${e.message}`)}
+                    try {
+                        fs.unlinkSync(outputPath);
+                    } catch (e: any) {
+                        this.logger.warn(`Failed to cleanup partial file ${outputPath}: ${e.message}`)
+                    }
                 }
             });
 
-            // Rethrow a more specific error
             throw new Error(`Failed to download file from Google Drive (ID: ${fileId}): ${error.message}`);
         }
     }
@@ -135,6 +139,7 @@ export class GoogleDriveService implements OnModuleInit {
             const response = await this.drive.files.get({
                 fileId: fileId,
                 fields: 'id, name, size, mimeType',
+                supportsAllDrives: true
             });
 
             const fileData = response.data;
@@ -142,7 +147,6 @@ export class GoogleDriveService implements OnModuleInit {
             const sizeInBytes = fileData.size ? parseInt(fileData.size, 10) : 0;
             if (isNaN(sizeInBytes)) {
                 this.logger.warn(`Could not parse size for file ID ${fileId}. Size reported: ${fileData.size}`);
-                // throw new Error(`Invalid size reported by Google Drive API for file ID: ${fileId}`);
             }
 
 
