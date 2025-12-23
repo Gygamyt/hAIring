@@ -14,6 +14,9 @@ import { ExtractedTopicsSchema } from '../components/topic-extractor';
  * This schema aggregates the outputs from all component subgraphs.
  */
 export const FullReportDtoSchema = z.object({
+    interviewId: z.string().optional(),
+    candidateId: z.string().optional(),
+
     /**
      * Extracted list of topics discussed.
      */

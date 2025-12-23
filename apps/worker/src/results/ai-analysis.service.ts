@@ -18,7 +18,8 @@ export class AiAnalysisService {
             IFinalReportState,
             Partial<IFinalReportState>
         >,
-    ) {}
+    ) {
+    }
 
     /**
      * Handles Step 3: Running the full AI analysis pipeline in a SINGLE call.
@@ -54,6 +55,7 @@ export class AiAnalysisService {
             );
 
             const finalReportInput: Partial<IFinalReportState> = {
+                interviewId: parentJobId,
                 transcript: transcriptionText,
                 cvText: cvText,
                 companyValues: valuesText,

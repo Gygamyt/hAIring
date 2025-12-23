@@ -14,14 +14,17 @@ const logger = new Logger('FinalReportNode');
 export const reportBuilderNode = (
     state: IFinalReportState,
 ): { finalReport: FullReportDto } => {
-    const traceId = state.graphError || 'builder-trace';
+    const traceId = state.interviewId || state.graphError || 'builder-trace';
+
     logger.log(
         `${chalk.blue('Node Started')} ${chalk.green('for node:')} ${chalk.yellow(
             'ReportBuilderNode',
-        )} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceId}`)}`,
+        )} | TraceID: ${traceId}`,
     );
 
     const {
+        interviewId,
+        candidateId,
         topics,
         parsedCv,
         parsedCommunicationSkills,
@@ -32,43 +35,27 @@ export const reportBuilderNode = (
         parsedOverallConclusion,
     } = state;
 
-    //todo FUCKING fix this sshiiieeet
-
     const finalReport: FullReportDto = {
+        interviewId: interviewId as string | undefined,
+        candidateId: candidateId as string | undefined,
+
         topics: Array.isArray(topics) ? { topics: topics } : undefined,
 
-        cvSummary: isValidDtoObject(parsedCv)
-            ? (parsedCv as any)
-            : undefined,
-        communicationSkills: isValidDtoObject(parsedCommunicationSkills)
-            ? (parsedCommunicationSkills as any)
-            : undefined,
-        valuesFit: isValidDtoObject(parsedValuesFit)
-            ? (parsedValuesFit as any)
-            : undefined,
-        technicalAssessment: isValidDtoObject(parsedTechnicalAssessment)
-            ? (parsedTechnicalAssessment as any)
-            : undefined,
-        languageAssessment: isValidDtoObject(parsedLanguageAssessment)
-            ? (parsedLanguageAssessment as any)
-            : undefined,
-        aiSummary: isValidDtoObject(parsedAiSummary)
-            ? (parsedAiSummary as any)
-            : undefined,
-        overallConclusion: isValidDtoObject(parsedOverallConclusion)
-            ? (parsedOverallConclusion as any)
-            : undefined,
+        cvSummary: isValidDtoObject(parsedCv) ? (parsedCv as any) : undefined,
+        communicationSkills: isValidDtoObject(parsedCommunicationSkills) ? (parsedCommunicationSkills as any) : undefined,
+        valuesFit: isValidDtoObject(parsedValuesFit) ? (parsedValuesFit as any) : undefined,
+        technicalAssessment: isValidDtoObject(parsedTechnicalAssessment) ? (parsedTechnicalAssessment as any) : undefined,
+        languageAssessment: isValidDtoObject(parsedLanguageAssessment) ? (parsedLanguageAssessment as any) : undefined,
+        aiSummary: isValidDtoObject(parsedAiSummary) ? (parsedAiSummary as any) : undefined,
+        overallConclusion: isValidDtoObject(parsedOverallConclusion) ? (parsedOverallConclusion as any) : undefined,
     };
 
     logger.log(
-        `${chalk.cyan('Node Finished')} ${chalk.green('for node:')} ${chalk.yellow(
-            'ReportBuilderNode',
-        )} ${chalk.green('|')} ${chalk.gray(`TraceID: ${traceId}`)}`,
+        `${chalk.cyan('Node Finished')} | Report assembled for Interview: ${interviewId}`,
     );
 
     return { finalReport };
 };
-
 /**
  * A synchronous node that handles a catastrophic failure of the orchestrator.
  * This should only be hit if a subgraph fails *and* the main graph logic fails.

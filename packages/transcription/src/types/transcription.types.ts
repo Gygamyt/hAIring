@@ -2,29 +2,42 @@ import { TranscriptWord } from "assemblyai";
 
 export interface TranscriptionOptions {
     languageDetection?: boolean;
-    languageCode?: string; // e.g., 'en_us', 'ru'
-    // languageConfidenceThreshold?: number; // Only used with languageDetection=true
+    languageCode?: string;
+    languageConfidenceThreshold?: number;
+    speechModel?: 'best' | 'nano';
+
     punctuate?: boolean;
     formatText?: boolean;
-    speakerLabels?: boolean; // Added for speaker diarization
-    speakersExpected?: number; // Added for speaker diarization
-    // Add other AssemblyAI features as needed
-    // sentimentAnalysis?: boolean;
-    // autoChapters?: boolean;
-    // summarization?: boolean;
-    // summaryModel?: 'informative' | 'conversational' | 'catchy';
-    // summaryType?: 'paragraph' | 'bullets' | 'bullets_verbose' | 'gist' | 'headline';
+
+    speakerLabels?: boolean;
+    speakersExpected?: number;
+
+    keytermsPrompt?: string[];
+
+    summarization?: boolean;
+    summaryModel?: 'informative' | 'conversational' | 'catchy';
+    summaryType?: 'paragraph' | 'bullets' | 'bullets_verbose' | 'gist' | 'headline';
+
+    sentimentAnalysis?: boolean;
+    autoChapters?: boolean;
+    entityDetection?: boolean;
+
+    piiRedaction?: boolean;
+    piiRedactionPolicy?: string;
+    filterProfanity?: boolean;
 }
 
 export interface TranscriptionResult {
-    text: string | null; // Text can be null if transcription fails or yields no content
+    audioId: string;
+    text: string | null;
     detectedLanguage?: string | null;
-    // languageConfidence?: number | null; // Confidence often not returned unless detection enabled
-    audioId: string; // AssemblyAI transcript ID
-    words: TranscriptWord[] | null; // Word timings/speakers
-    utterances?: any[] | null; // Speaker labels result
-    // Add other potential results
-    // sentimentAnalysisResults?: any[] | null;
-    // chapters?: any[] | null;
-    // summary?: string | null;
+    languageConfidence?: number | null;
+
+    words: TranscriptWord[] | null;
+    utterances?: any[] | null;
+
+    summary?: string | null;
+    chapters?: any[] | null;
+    sentimentAnalysisResults?: any[] | null;
+    entities?: any[] | null;
 }

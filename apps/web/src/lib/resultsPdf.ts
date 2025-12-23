@@ -3,7 +3,6 @@ import autoTable from 'jspdf-autotable';
 import { FullReport, TopicAssessment, AssessedValue } from '@/types/results.types';
 import { toast } from 'sonner';
 
-// --- Хелперы из старого файла (оставляем без изменений) ---
 const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
     let binary = '';
     const bytes = new Uint8Array(buffer);
@@ -32,19 +31,16 @@ async function loadFonts(doc: jsPDF) {
         });
     }
 }
-// --- Конец хелперов ---
 
-/**
- * Генерирует и скачивает PDF-отчет на основе НОВЫХ DTO.
- */
+
 export const exportResultsPdf = async (report: FullReport) => {
     const doc = new jsPDF();
     await loadFonts(doc);
 
     doc.setFont('Roboto');
-    let lastY = 15; // Отслеживаем Y-позицию
+    let lastY = 15;
+    let sectionCounter = 1;
 
-    // Хелпер для добавления текста с переносом
     const addText = (
         text: string,
         x: number,
@@ -63,16 +59,21 @@ export const exportResultsPdf = async (report: FullReport) => {
         return y + doc.getTextDimensions(splitText).h + 2; // Возвращаем новую Y-позицию
     };
 
-    // --- 1. Заголовок ---
-    lastY = addText(
-        `Фидбек на кандидата ${report.cvSummary.fullName}`,
-        15,
-        lastY,
-        { fontStyle: 'bold', fontSize: 14 },
-    );
+    const checkPageBreak = (currentY: number) => {
+        if (currentY > 260) {
+            doc.addPage();
+            return 15;
+        }
+        return currentY;
+    };
+
+    const title = report.cvSummary
+        ? `Фидбек на кандидата ${report.cvSummary.fullName}`
+        : 'Фидбек на кандидата';
+    lastY = addText(title, 15, lastY, { fontStyle: 'bold', fontSize: 14 });
     lastY += 5;
 
-    // --- 2. AI Summary ---
+    lastY = checkPageBreak(lastY);
     lastY = addText('AI-generated summary:', 15, lastY, {
         fontStyle: 'bold',
         fontSize: 12,
@@ -92,29 +93,25 @@ export const exportResultsPdf = async (report: FullReport) => {
     );
     lastY += 5;
 
-    // --- 3. CV Summary ---
-    lastY = addText('1. Информация о кандидате (из CV)', 15, lastY, {
-        fontStyle: 'bold',
-        fontSize: 12,
-    });
-    lastY = addText(
-        `• Имя: ${report.cvSummary.fullName}\n` +
-        `• Опыт: ${report.cvSummary.yearsOfExperience} лет\n` +
-        `• Локация: ${report.cvSummary.location}\n` +
-        `• Навыки: ${report.cvSummary.skills.join(', ')}`,
-        20,
-        lastY,
-    );
-    lastY += 5;
-
-    // Проверка на новую страницу
-    if (lastY > 250) {
-        doc.addPage();
-        lastY = 15;
+    if (report.cvSummary) {
+        lastY = checkPageBreak(lastY);
+        lastY = addText(`$${sectionCounter++}. Информация о кандидате (из CV)`, 15, lastY, {
+            fontStyle: 'bold',
+            fontSize: 12,
+        });
+        lastY = addText(
+            `• Имя: ${report.cvSummary.fullName}\n` +
+            `• Опыт: ${report.cvSummary.yearsOfExperience} лет\n` +
+            `• Локация: ${report.cvSummary.location}\n` +
+            `• Навыки: ${report.cvSummary.skills.join(', ')}`,
+            20,
+            lastY,
+        );
+        lastY += 5;
     }
 
-    // --- 4. Technical Assessment ---
-    lastY = addText('2. Техническая оценка', 15, lastY, {
+    lastY = checkPageBreak(lastY);
+    lastY = addText(`$${sectionCounter++}. Техническая оценка`, 15, lastY, {
         fontStyle: 'bold',
         fontSize: 12,
     });
@@ -134,29 +131,25 @@ export const exportResultsPdf = async (report: FullReport) => {
     });
     lastY = (doc as any).lastAutoTable.finalY + 10;
 
-    // --- 5. Language Assessment ---
-    lastY = addText('3. Оценка языка', 15, lastY, {
-        fontStyle: 'bold',
-        fontSize: 12,
-    });
-    lastY = addText(report.languageAssessment.summary, 15, lastY);
-    lastY = addText(
-        `• Уровень: ${report.languageAssessment.overallLevel}\n` +
-        `• Беглость: ${report.languageAssessment.fluency}\n` +
-        `• Словарь: ${report.languageAssessment.vocabulary}`,
-        20,
-        lastY,
-    );
-    lastY += 5;
-
-    // Проверка на новую страницу
-    if (lastY > 250) {
-        doc.addPage();
-        lastY = 15;
+    if (report.languageAssessment) {
+        lastY = checkPageBreak(lastY);
+        lastY = addText(`$${sectionCounter++}. Оценка языка`, 15, lastY, {
+            fontStyle: 'bold',
+            fontSize: 12,
+        });
+        lastY = addText(report.languageAssessment.summary, 15, lastY);
+        lastY = addText(
+            `• Уровень: ${report.languageAssessment.overallLevel}\n` +
+            `• Беглость: ${report.languageAssessment.fluency}\n` +
+            `• Словарь: ${report.languageAssessment.vocabulary}`,
+            20,
+            lastY,
+        );
+        lastY += 5;
     }
 
-    // --- 6. Values Fit ---
-    lastY = addText('4. Соответствие ценностям', 15, lastY, {
+    lastY = checkPageBreak(lastY);
+    lastY = addText(`$${sectionCounter++}. Соответствие ценностям`, 15, lastY, {
         fontStyle: 'bold',
         fontSize: 12,
     });
@@ -177,14 +170,8 @@ export const exportResultsPdf = async (report: FullReport) => {
     });
     lastY = (doc as any).lastAutoTable.finalY + 10;
 
-    // Проверка на новую страницу
-    if (lastY > 250) {
-        doc.addPage();
-        lastY = 15;
-    }
-
-    // --- 7. Overall Conclusion ---
-    lastY = addText('5. Заключение', 15, lastY, {
+    lastY = checkPageBreak(lastY);
+    lastY = addText(`$${sectionCounter++}. Заключение`, 15, lastY, {
         fontStyle: 'bold',
         fontSize: 12,
     });
@@ -212,7 +199,7 @@ export const exportResultsPdf = async (report: FullReport) => {
         lastY,
     );
 
-    // --- 8. Сохранение ---
-    const fullName = report.cvSummary.fullName.replace(/\s+/g, '_');
-    doc.save(`Фидбек на кандидата ${fullName}.pdf`);
+    const baseName = report.cvSummary ? report.cvSummary.fullName : 'кандидата';
+    const safeFullName = baseName.replace(/\s+/g, '_');
+    doc.save(`Фидбек на кандидата ${safeFullName}.pdf`);
 };

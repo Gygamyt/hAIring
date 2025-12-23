@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ASSEMBLYAI_CLIENT } from './constants';
 import chalk from 'chalk';
-import { AssemblyAI, Transcript, TranscriptParams } from 'assemblyai';
+import { AssemblyAI, Transcript } from 'assemblyai';
 import { logUtterances } from "./utils/formatter.utils";
 import { TranscriptionOptions, TranscriptionResult } from "./types";
 
@@ -17,9 +17,7 @@ export class TranscriptionService {
 
     /**
      * Transcribes an audio file using AssemblyAI's standard transcription endpoint.
-     * @param audioSource Path or URL to the audio file.
-     * @param options Configuration for the transcription job.
-     * @returns Detailed transcription results.
+     * Supports Audio Intelligence features (Summary, Sentiment, Chapters).
      */
     async transcribeFile(
         audioSource: string,
@@ -28,93 +26,103 @@ export class TranscriptionService {
         const {
             languageDetection = false,
             languageCode = 'ru',
+            languageConfidenceThreshold,
             punctuate = true,
             formatText = true,
             speakerLabels = true,
             speakersExpected = 2,
+            speechModel = 'best',
+            keytermsPrompt,
+            summarization,
+            summaryModel,
+            summaryType,
+            sentimentAnalysis,
+            autoChapters,
+            entityDetection,
+            piiRedaction,
+            piiRedactionPolicy,
+            filterProfanity,
         } = options;
 
         this.logger.log(chalk.blue(`Starting file transcription for: ${audioSource}`));
 
         const config: any = { //fuck any, but I'm lazy
             audio: audioSource,
+            speech_model: speechModel,
             punctuate: punctuate,
             format_text: formatText,
             speaker_labels: speakerLabels,
+            filter_profanity: filterProfanity,
         };
 
+        // --- Speaker Diarization ---
         if (speakerLabels && speakersExpected > 0) {
             config.speakers_expected = speakersExpected;
         }
 
-        if (languageCode) {
-            config.language_code = languageCode as any;
-            this.logger.log(chalk.cyan(`Using specified language_code: ${languageCode}`));
-        } else if (languageDetection) {
+        // --- Language Settings ---
+        if (languageDetection) {
             config.language_detection = true;
-            // config.language_confidence_threshold = languageConfidenceThreshold;
-            this.logger.log(chalk.cyan(`Using language_detection.`));
+            if (languageConfidenceThreshold) {
+                config.language_confidence_threshold = languageConfidenceThreshold;
+            }
+            this.logger.log(chalk.cyan(`Using automatic language detection.`));
         } else {
-            this.logger.warn(`No language_code specified and language_detection is off. AssemblyAI will attempt auto-detection.`);
+            config.language_code = languageCode as any; // Cast for SDK compatibility
+            this.logger.log(chalk.cyan(`Using fixed language_code: ${languageCode}`));
         }
 
-        // if (options.sentimentAnalysis) config.sentiment_analysis = true;
-        // if (options.autoChapters) config.auto_chapters = true;
-        // if (options.summarization) {
-        //     config.summarization = true;
-        //     if (options.summaryModel) config.summary_model = options.summaryModel;
-        //     if (options.summaryType) config.summary_type = options.summaryType;
-        // }
+        // --- Accuracy Boost (Keyterms) ---
+        if (keytermsPrompt && keytermsPrompt.length > 0) {
+            config.keyterms_prompt = keytermsPrompt;
+            this.logger.log(chalk.magenta(`Applying keyterms prompt for vocabulary boost.`));
+        }
+
+        // --- Audio Intelligence Settings ---
+        if (summarization) {
+            config.summarization = true;
+            config.summary_model = summaryModel;
+            config.summary_type = summaryType;
+        }
+
+        if (sentimentAnalysis) config.sentiment_analysis = true;
+        if (autoChapters) config.auto_chapters = true;
+        if (entityDetection) config.entity_detection = true;
+
+        // --- Content Safety / Privacy ---
+        if (piiRedaction) {
+            config.redact_pii = true;
+            if (piiRedactionPolicy) config.redact_pii_policies = piiRedactionPolicy as any;
+        }
 
         let transcript: Transcript;
         try {
-            this.logger.log(`Submitting transcription job with config: ${JSON.stringify(config)}`);
+            this.logger.log(`Submitting job. Config: ${JSON.stringify({ ...config, audio: 'HIDDEN' })}`);
             transcript = await this.client.transcripts.transcribe(config);
-            this.logger.log(`Transcription job submitted. Transcript ID: ${transcript.id}, Status: ${transcript.status}`);
-
-            // Polling might be needed if transcribe doesn't wait, but SDK usually handles this.
-            // If it returns immediately with 'queued', you'd need a polling loop:
-            // while (transcript.status === 'queued' || transcript.status === 'processing') {
-            //    await new Promise(res => setTimeout(res, 5000)); // Wait 5 seconds
-            //    transcript = await this.client.transcripts.get(transcript.id);
-            //    this.logger.log(`Polling status for ${transcript.id}: ${transcript.status}`);
-            // }
-
         } catch (error: any) {
-            this.logger.error(`Error submitting or retrieving transcription: ${error.message}`, error.stack);
+            this.logger.error(`AssemblyAI Error: ${error.message}`, error.stack);
             throw new Error(`AssemblyAI transcription failed: ${error.message}`);
+        }
+
+        // --- Result Validation ---
+        if (transcript.status === 'error') {
+            this.logger.error(`Transcription failed: ${transcript.error}`);
+            throw new Error(`Transcription error: ${transcript.error}`);
         }
 
         if (transcript.utterances) {
             logUtterances(transcript, this.logger);
-        } else {
-            this.logger.warn(`Speaker labels (utterances) not found in transcription result for ID: ${transcript.id}`);
         }
 
-        if (transcript.status === 'error') {
-            this.logger.error(`Transcription failed for ID ${transcript.id}: ${transcript.error}`);
-            throw new Error(`Transcription error for ID ${transcript.id}: ${transcript.error}`);
-        }
-        if (transcript.status !== 'completed') {
-            this.logger.error(`Transcription finished with unexpected status '${transcript.status}' for ID ${transcript.id}`);
-            throw new Error(`Transcription finished with status '${transcript.status}' for ID ${transcript.id}`);
-        }
-
-        this.logger.log(chalk.green(`Transcription completed successfully for ID: ${transcript.id}`));
-        if (transcript.language_code) {
-            this.logger.log(chalk.yellow(`Detected language: ${transcript.language_code}`));
-        }
+        this.logger.log(chalk.green(`Transcription completed. ID: ${transcript.id}`));
 
         return {
+            audioId: transcript.id,
             text: transcript.text ?? null,
             detectedLanguage: transcript.language_code ?? null,
-            audioId: transcript.id,
+            languageConfidence: transcript.language_confidence ?? null,
             words: transcript.words ?? null,
             utterances: transcript.utterances ?? null,
-            // Map other results if requested in options
-            // sentimentAnalysisResults: transcript.sentiment_analysis_results ?? null,
-            // chapters: transcript.chapters ?? null,
-            // summary: transcript.summary ?? null,
         };
     }
 }

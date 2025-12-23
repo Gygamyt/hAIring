@@ -61,16 +61,16 @@ export const createFinalReportSubgraph = (llm: ChatGoogleGenerativeAI) => {
                 // @ts-ignore
                 output[key] = subGraphResponse[key];
             }
-
             if (subgraphName === 'topicExtractor') {
-                const topicsObject = subGraphResponse.extractedTopics as { topics?: string[] };
+                const topicsArray = subGraphResponse.extractedTopics as string[];
                 logger.log(
                     `${chalk.magenta('--- DEBUG LOG (TopicExtractor Adapter) ---')} | ${chalk.yellow(
                         'Raw extractedTopics object:',
-                    )} ${JSON.stringify(topicsObject)}`,
+                    )} ${JSON.stringify(topicsArray)}`,
                 );
                 // @ts-ignore
-                output.topicList = topicsObject?.topics ?? [];
+                output.topicList = Array.isArray(topicsArray) ? topicsArray : [];
+
                 // @ts-ignore
                 delete output.extractedTopics;
             }

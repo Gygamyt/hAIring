@@ -262,6 +262,32 @@ class FullReportDto {
 // --- API Envelope --------------------------------------------------
 // -------------------------------------------------------------------
 
+class JobHistoryEntryDto {
+    @ApiProperty()
+    @IsString()
+    jobName!: string;
+
+    @ApiProperty()
+    @IsString()
+    status!: string; // 'success' | 'failed'
+
+    @ApiProperty()
+    @IsString()
+    timestamp!: string;
+}
+
+class AnalysisMetadataDto {
+    @ApiProperty()
+    @IsString()
+    jobId!: string;
+
+    @ApiProperty({ type: [JobHistoryEntryDto] })
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => JobHistoryEntryDto)
+    jobHistory!: JobHistoryEntryDto[];
+}
+
 export class ResultsAnalysisResponseDto {
     @ApiProperty()
     @IsString()
@@ -276,4 +302,10 @@ export class ResultsAnalysisResponseDto {
     @Type(() => FullReportDto)
     @IsOptional()
     report?: FullReportDto;
+
+    @ApiProperty({ required: false })
+    @ValidateNested()
+    @Type(() => AnalysisMetadataDto)
+    @IsOptional()
+    metadata?: AnalysisMetadataDto;
 }

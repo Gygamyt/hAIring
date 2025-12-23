@@ -23,9 +23,10 @@ interface ResultsReportProps {
     report: FullReport;
 }
 
-
 export const ResultsReport = ({ report }: ResultsReportProps) => {
     const [isExporting, setIsExporting] = useState(false);
+
+    let sectionCounter = 1;
 
     const handleExport = async () => {
         setIsExporting(true);
@@ -49,7 +50,10 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle className="text-xl">
-                        Фидбек на кандидата {report.cvSummary.fullName}
+                        {/* Условный заголовок */}
+                        {report.cvSummary
+                            ? `Фидбек на кандидата ${report.cvSummary.fullName}`
+                            : 'Фидбек на кандидата'}
                     </CardTitle>
                     <Button onClick={handleExport} disabled={isExporting} variant="outline">
                         {isExporting ? (
@@ -91,29 +95,35 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                     </div>
                 </div>
 
-                <div>
-                    <h3 className="text-lg font-bold text-foreground mb-2">
-                        1. Информация о кандидате (из CV)
-                    </h3>
-                    <div className="pl-4 space-y-1 text-muted-foreground">
-                        <p>
-                            • <b>Имя:</b> {report.cvSummary.fullName}
-                        </p>
-                        <p>
-                            • <b>Опыт:</b> {report.cvSummary.yearsOfExperience} лет
-                        </p>
-                        <p>
-                            • <b>Локация:</b> {report.cvSummary.location}
-                        </p>
-                        <p>
-                            • <b>Навыки:</b> {report.cvSummary.skills.join(', ')}
-                        </p>
+                {/* --- 1. CV Summary (УСЛОВНО) --- */}
+                {report.cvSummary && (
+                    <div>
+                        <h3 className="text-lg font-bold text-foreground mb-2">
+                            {/* Динамический номер */}
+                            {sectionCounter++}. Информация о кандидате (из CV)
+                        </h3>
+                        <div className="pl-4 space-y-1 text-muted-foreground">
+                            <p>
+                                • <b>Имя:</b> {report.cvSummary.fullName}
+                            </p>
+                            <p>
+                                • <b>Опыт:</b> {report.cvSummary.yearsOfExperience} лет
+                            </p>
+                            <p>
+                                • <b>Локация:</b> {report.cvSummary.location}
+                            </p>
+                            <p>
+                                • <b>Навыки:</b> {report.cvSummary.skills.join(', ')}
+                            </p>
+                        </div>
                     </div>
-                </div>
+                )}
 
+                {/* --- 2. Technical Assessment --- */}
                 <div>
                     <h3 className="text-lg font-bold text-foreground mb-2">
-                        2. Техническая оценка
+                        {/* Динамический номер */}
+                        {sectionCounter++}. Техническая оценка
                     </h3>
                     <p className="text-muted-foreground mb-3">
                         {report.technicalAssessment.summary}
@@ -140,30 +150,35 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                     </div>
                 </div>
 
-                <div>
-                    <h3 className="text-lg font-bold text-foreground mb-2">
-                        3. Оценка языка
-                    </h3>
-                    <p className="text-muted-foreground mb-2">
-                        {report.languageAssessment.summary}
-                    </p>
-                    <div className="pl-4 space-y-1 text-muted-foreground">
-                        <p>
-                            • <b>Уровень:</b> {report.languageAssessment.overallLevel}
+                {/* --- 3. Language Assessment (УСЛОВНО) --- */}
+                {report.languageAssessment && (
+                    <div>
+                        <h3 className="text-lg font-bold text-foreground mb-2">
+                            {/* Динамический номер */}
+                            {sectionCounter++}. Оценка языка
+                        </h3>
+                        <p className="text-muted-foreground mb-2">
+                            {report.languageAssessment.summary}
                         </p>
-                        <p>
-                            • <b>Беглость:</b> {report.languageAssessment.fluency}
-                        </p>
-                        <p>
-                            • <b>Словарь:</b> {report.languageAssessment.vocabulary}
-                        </p>
+                        <div className="pl-4 space-y-1 text-muted-foreground">
+                            <p>
+                                • <b>Уровень:</b> {report.languageAssessment.overallLevel}
+                            </p>
+                            <p>
+                                • <b>Беглость:</b> {report.languageAssessment.fluency}
+                            </p>
+                            <p>
+                                • <b>Словарь:</b> {report.languageAssessment.vocabulary}
+                            </p>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {/* --- Values Fit --- */}
+                {/* --- 4. Values Fit --- */}
                 <div>
                     <h3 className="text-lg font-bold text-foreground mb-2">
-                        4. Соответствие ценностям
+                        {/* Динамический номер */}
+                        {sectionCounter++}. Соответствие ценностям
                     </h3>
                     <p className="text-muted-foreground mb-3">
                         {report.valuesFit.overallSummary}
@@ -190,10 +205,11 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                     </div>
                 </div>
 
-                {/* --- Overall Conclusion --- */}
+                {/* --- 5. Overall Conclusion --- */}
                 <div>
                     <h3 className="text-lg font-bold text-foreground mb-2">
-                        5. Заключение
+                        {/* Динамический номер */}
+                        {sectionCounter++}. Заключение
                     </h3>
                     <div className="pl-4 space-y-3">
                         <p className="text-lg text-foreground">

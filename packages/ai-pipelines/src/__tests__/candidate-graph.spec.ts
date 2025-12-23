@@ -50,9 +50,9 @@ describe('Main Candidate Pipeline - End-to-End Test', () => {
 
         const finalState = await pipeline.invoke(initialInput);
         expect(finalState.report).toBeDefined();
-        expect(finalState.report.first_name).toBe('Иван');
-        expect(finalState.report.candidate_profile).toBe('AQA, Middle');
-        expect(finalState.report.conclusion.summary).toBe('OK');
+        expect(finalState.report!.first_name).toBe('Иван');
+        expect(finalState.report!.candidate_profile).toBe('AQA, Middle');
+        expect(finalState.report!.conclusion.summary).toBe('OK');
         expect(finalState.aggregatedResult).toBeDefined();
         expect(finalState.finalResult).toBeDefined();
         expect(llmInvokeSpy).toHaveBeenCalledTimes(9);

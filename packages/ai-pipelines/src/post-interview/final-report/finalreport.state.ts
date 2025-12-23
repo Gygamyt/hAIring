@@ -19,6 +19,8 @@ export const FinalReportStateSchema = {
     cvText: Annotation<string>(),
     transcript: Annotation<string>(),
     companyValues: Annotation<string>(),
+    interviewId: Annotation<string>(),
+    candidateId: Annotation<string>(),
 
     // --- FINAL OUTPUT ---
     finalReport: Annotation<FullReportDto | null>(),
