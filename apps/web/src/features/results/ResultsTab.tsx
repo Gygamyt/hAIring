@@ -15,7 +15,6 @@ interface ResultsTabProps {
 }
 
 export const ResultsTab = ({
-                               isPolling,
                                jobStatus,
                                analysisData,
                                analysisError,
@@ -36,17 +35,11 @@ export const ResultsTab = ({
         });
     };
 
-    // Мы считаем, что джоба "запущена", если:
-    // 1. Идет самый первый POST-запрос (isStarting)
-    // 2. ИЛИ у нас есть статус, и он НЕ 'completed' и НЕ 'failed'
     const isJobRunning = isStarting || (jobStatus && jobStatus !== 'completed' && jobStatus !== 'failed');
 
-    // --- 5. ГЛАВНЫЙ ФИКС (СПИННЕР) ---
-    // Показываем главный спиннер, если джоба запущена
     if (isJobRunning) {
         return (
             <div className="text-center py-20 flex flex-col items-center justify-center min-h-[50vh]">
-                {/* Вот крутящийся спиннер */}
                 <Loader2 className="w-16 h-16 animate-spin text-primary mb-6" />
 
                 <p className="text-lg font-semibold mb-2 text-foreground">
@@ -58,9 +51,7 @@ export const ResultsTab = ({
             </div>
         );
     }
-    // --- КОНЕЦ ФИКСА ---
 
-    // Показываем ошибку
     if (analysisError) {
         return (
             <Card className="border-destructive">
@@ -88,19 +79,16 @@ export const ResultsTab = ({
         );
     }
 
-    // Показываем результат
     if (analysisData) {
-        // ВНИМАНИЕ: Это будет КРАШИТЬСЯ, если ты не исправил DTO в ResultsReport.tsx
         return <ResultsReport report={analysisData.report} />;
     }
 
-    // По умолчанию показываем форму
     return (
         <div className="space-y-6">
             <h2 className="text-3xl font-bold">Анализ Результатов Интервью</h2>
             <ResultsForm
                 onSubmit={handleSubmit}
-                isLoading={isStarting} // Спиннер в кнопке 'Запустить'
+                isLoading={isStarting}
             />
         </div>
     );

@@ -9,6 +9,12 @@ Your task is to evaluate a candidate's alignment with a set of company values, b
 First, carefully review the company values provided.
 Next, analyze the entire interview transcript for statements, mindsets, or behavioral examples that align or misalign with those values.
 
+**LANGUAGE RULES (CRITICAL):**
+1. The "overallSummary" and each "evidence" field MUST be written in RUSSIAN.
+2. The "match" field values MUST remain in English exactly as specified: "high", "medium", "low", or "not_discussed".
+3. Maintain the "value" name as it appears in the company values list (keep original language).
+4. Use professional Russian terminology for behavioral analysis.
+
 COMPANY VALUES:
 ---
 {companyValues}
@@ -19,23 +25,17 @@ INTERVIEW TRANSCRIPT:
 {transcript}
 ---
 
-Based *only* on the transcript and values, generate a JSON object that strictly adheres to the following format.
-For each value, provide a "match" level and concrete "evidence" (like quotes) from the transcript.
-If a value was not discussed or there is no evidence, mark it as "not_discussed".
+Based *only* on the transcript and values, generate a JSON object that strictly adheres to the following format. 
+Ensure all descriptive text is in RUSSIAN.
 
 JSON output format:
 {{
-  "overallSummary": "A high-level summary of the candidate's alignment with the provided company values.",
+  "overallSummary": "Высокоуровневое резюме соответствия кандидата корпоративным ценностям на РУССКОМ языке.",
   "assessedValues": [
     {{
-      "value": "The specific company value being assessed (e.g., 'Ownership').",
+      "value": "Конкретная оцениваемая ценность (например, 'Ownership').",
       "match": "high" | "medium" | "low" | "not_discussed",
-      "evidence": "Specific examples, direct quotes, or behavioral evidence from the transcript to support the assessment."
-    }},
-    {{
-      "value": "Another company value (e.g., 'Curiosity').",
-      "match": "high" | "medium" | "low" | "not_discussed",
-      "evidence": "Evidence for the second value."
+      "evidence": "Конкретные примеры, прямые цитаты или поведенческие доказательства из транскрипта на РУССКОМ языке для подтверждения оценки."
     }}
   ]
 }}
@@ -55,7 +55,9 @@ export const createValuesFitGeneratePrompt = () => {
 
 const FIX_PROMPT_TEMPLATE = `
 You are a JSON correction agent. A previous step failed to produce valid JSON based on a schema.
-Your task is to correct the invalid JSON. Pay close attention to the error message.
+Your task is to correct the invalid JSON. 
+
+**IMPORTANT**: Ensure the "overallSummary" and "evidence" fields remain in RUSSIAN as originally intended.
 
 **The Error:**
 {validationError}

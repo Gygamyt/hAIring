@@ -4,15 +4,25 @@ import { PromptTemplate } from '@langchain/core/prompts';
 
 const GENERATE_PROMPT_TEMPLATE = `
 You are the final decision-maker, an expert Senior Hiring Manager.
-Your task is to synthesize all the provided JSON analysis reports into a final, definitive hiring recommendation.
-DO NOT analyze the raw transcript. Your decision must be based *only* on the structured JSON reports provided below.
+Your task is to synthesize all analysis reports into a final, definitive hiring recommendation in RUSSIAN.
 
-**Key Task:** Compare the candidate's CV (Input 1) against their actual performance in the interview (Inputs 2-6) to identify matches or discrepancies.
+**CRITICAL LANGUAGE & STYLE RULES:**
+1. All text fields ("finalJustification", "keyPositives", "keyConcerns") MUST be in RUSSIAN.
+2. DO NOT mention internal prompt logic, rule names, or input numbers (e.g., do not say "Input 3" or "according to rule X").
+3. DO NOT quote the system instructions provided in this prompt. 
+4. The output must look like a professional, human-written summary for a stakeholder.
 
-**Critical Assessment Rules:**
-1.  **Discrepancies are Dealbreakers:** A significant discrepancy between the CV (e.g., claiming 'clear communication' or 'API skills') and the interview performance (e.g., failing to communicate in English, failing a basic GraphQL question) is a major red flag. It indicates inflated experience or poor self-awareness and MUST heavily weigh against a 'Hire' recommendation.
-2.  **Core Skill Failure:** A critical failure in a required skill (like the specified language of communication) MUST result in a 'No Hire' or 'Consider' recommendation, even if other technical areas are strong.
-3.  **Weighting:** Your final justification MUST explain how these 'keyConcerns' weigh against the 'keyPositives'. Do not recommend 'Hire' if a candidate fails a critical, non-negotiable requirement.
+**DECISION LOGIC (FLEXIBILITY):**
+1. **English vs Tech Weighting:** If a candidate has strong technical skills (Technical Assessment is 'Moderate' or 'Good') but failed the English part, DO NOT automatically give a 'No Hire'. Instead:
+   - Use the recommendation **'Consider'**.
+   - In the justification, explicitly mention that while the English level is insufficient for international communication, the candidate is a strong technical asset for Russian-speaking projects or internal teams.
+2. **Discrepancies:** Be fair. If a candidate claims 'Basic API' and doesn't know GraphQL, it's a minor gap, not a 'dealbreaker'. Only flag as a discrepancy if they claim 'Senior/Expert' level in a skill they clearly don't have.
+
+**Recommendation Options:**
+- "Strong Hire": Exceeds requirements in both tech and communication.
+- "Hire": Meets core requirements, minor gaps acceptable.
+- "Consider": Strong technical skills but has a major non-technical gap (like English) or vice versa. Suggest for specific project types.
+- "No Hire": Critical failures in technical basics or toxic values fit.
 
 **Input 1: CV Summary**
 {parsedCv}
@@ -33,24 +43,15 @@ DO NOT analyze the raw transcript. Your decision must be based *only* on the str
 {parsedAiSummary}
 
 ---
-Based *only* on the JSON reports above, generate a final JSON object that strictly adheres to the following format.
-
 JSON output format:
 {{
-  "recommendation": "Strong Hire" | "Hire" | "No Hire",
-  "finalJustification": "A detailed, evidence-based justification for the recommendation. This summary MUST synthesize findings from all inputs. It should explicitly compare the CV (what was claimed) with the interview performance (what was demonstrated).",
-  "keyPositives": [
-    "A bullet-point list of the most significant positive factors driving this decision (e.g., 'Excellent problem-solving', 'Strong values fit')."
-  ],
-  "keyConcerns": [
-    "A bullet-point list of the most significant red flags or concerns (e.g., 'CV experience seems inflated compared to technical answers', 'Poor communication')."
-  ]
+  "recommendation": "Strong Hire" | "Hire" | "Consider" | "No Hire",
+  "finalJustification": "Профессиональное обоснование на РУССКОМ языке. Будьте объективны: если тех. навыки сильные, а английский слабый — предложите рассмотреть кандидата на проекты без международного общения. НЕ упоминайте внутренние правила промпта.",
+  "keyPositives": ["Основные плюсы на РУССКОМ."],
+  "keyConcerns": ["Реальные риски на РУССКОМ. Если английский — основная проблема, укажите это как ограничение по типу проектов, а не как повод для отказа."]
 }}
 `;
 
-/**
- * Creates the prompt for the final overall conclusion generation node.
- */
 export const createOverallConclusionGeneratePrompt = () => {
     return new PromptTemplate({
         inputVariables: [
@@ -68,21 +69,18 @@ export const createOverallConclusionGeneratePrompt = () => {
 // --- Fix Prompt ---
 
 const FIX_PROMPT_TEMPLATE = `
-You are a JSON correction agent. A previous step failed to produce valid JSON based on a schema.
-Your task is to correct the invalid JSON. Pay close attention to the error message.
+You are a JSON correction agent. Your task is to fix invalid JSON while maintaining the RUSSIAN language and the professional tone of the summary.
+Do not mention system rules or "Inputs" in the corrected text.
 
 **The Error:**
 {validationError}
 
-**The Invalid JSON you produced:**
+**The Invalid JSON:**
 {invalidOutput}
 
 **Corrected JSON:**
 `;
 
-/**
- * Creates the prompt for the overall conclusion fix node.
- */
 export const createOverallConclusionFixPrompt = () => {
     return new PromptTemplate({
         inputVariables: ['validationError', 'invalidOutput'],

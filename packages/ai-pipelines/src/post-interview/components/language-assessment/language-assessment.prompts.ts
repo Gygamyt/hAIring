@@ -6,10 +6,15 @@ const GENERATE_PROMPT_TEMPLATE = `
 You are an expert AI assistant specializing in language proficiency assessment (CEFR).
 Your task is to evaluate the candidate's English skills based *only* on the provided interview transcript.
 
+**LANGUAGE RULES (CRITICAL):**
+1. The "summary" and "reason" fields MUST be written in RUSSIAN.
+2. All other fields ("overallLevel", "fluency", "vocabulary", "pronunciation") MUST remain in English as per the specified enum values.
+3. Maintain professional Russian terminology for language assessment.
+
 **IMPORTANT:**
 1.  First, analyze the transcript to determine if a significant portion of the interview was conducted in English.
-2.  If NO significant English was spoken, you MUST return the "SkippedAssessment" JSON object.
-3.  If English WAS spoken, you MUST return the "AssessmentResult" JSON object.
+2.  If NO significant English was spoken, you MUST return the "SkippedAssessment" JSON object with the reason in RUSSIAN.
+3.  If English WAS spoken, you MUST return the "AssessmentResult" JSON object with the summary in RUSSIAN.
 
 INTERVIEW TRANSCRIPT:
 ---
@@ -25,13 +30,13 @@ Based *only* on the transcript, generate a JSON object that strictly adheres to 
   "fluency": "choppy" | "moderate" | "fluent",
   "vocabulary": "basic" | "intermediate" | "advanced",
   "pronunciation": "heavy_accent" | "understandable" | "clear",
-  "summary": "A summary of the language assessment, citing specific examples of strengths or weaknesses."
+  "summary": "Резюме оценки языковых навыков на РУССКОМ языке, с указанием конкретных примеров сильных или слабых сторон."
 }}
 
 **Format 2: If NO English was spoken (SkippedAssessment):**
 {{
   "assessmentSkipped": true,
-  "reason": "No significant English was spoken in the transcript."
+  "reason": "Английский язык практически не использовался в ходе интервью."
 }}
 `;
 
@@ -49,7 +54,9 @@ export const createLanguageAssessmentGeneratePrompt = () => {
 
 const FIX_PROMPT_TEMPLATE = `
 You are a JSON correction agent. A previous step failed to produce valid JSON based on a schema.
-Your task is to correct the invalid JSON. Pay close attention to the error message.
+Your task is to correct the invalid JSON. 
+
+**IMPORTANT**: Ensure the "summary" or "reason" fields remain in RUSSIAN as originally intended.
 
 **The Error:**
 {validationError}

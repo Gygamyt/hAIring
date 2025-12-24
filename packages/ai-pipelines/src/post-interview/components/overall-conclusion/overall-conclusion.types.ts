@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 export const OverallConclusionOutputSchema = z.object({
     recommendation: z
-        .enum(['Strong Hire', 'Hire', 'No Hire'])
+        .enum(['Strong Hire', 'Hire', 'No Hire', 'Consider'])
         .describe('The final, definitive hiring recommendation.'),
 
     finalJustification: z

@@ -36,7 +36,6 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
 
     let sectionCounter = 1;
 
-    // Функция для копирования ID в буфер обмена
     const handleCopyId = async () => {
         if (!report.interviewId) return;
         try {
