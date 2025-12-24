@@ -26,15 +26,38 @@ import {
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 
-interface ResultsReportProps {
-    report: FullReport;
-}
+interface ResultsReportProps { report: FullReport; }
 
 export const ResultsReport = ({ report }: ResultsReportProps) => {
     const [isExporting, setIsExporting] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
 
     let sectionCounter = 1;
+
+    const getRecommendationClass = (rec: string) => {
+        const r = rec.toLowerCase();
+        if (r.includes('strong hire')) return 'bg-green-600 hover:bg-green-700 text-white border-none';
+        if (r.includes('no hire')) return 'bg-red-600 hover:bg-red-700 text-white border-none';
+        if (r.includes('consider')) return 'bg-yellow-500 hover:bg-yellow-600 text-white border-none';
+        return 'bg-blue-600 hover:bg-blue-700 text-white border-none';
+    };
+
+    const getGradeClass = (grade: string) => {
+        const g = grade.toLowerCase();
+        if (g === 'excellent') return 'bg-green-100 text-green-800 border-green-200';
+        if (g === 'good') return 'bg-blue-100 text-blue-800 border-blue-200';
+        if (g === 'moderate') return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        if (g === 'weak') return 'bg-red-100 text-red-800 border-red-200';
+        return '';
+    };
+
+    const getMatchClass = (match: string) => {
+        const m = match.toLowerCase();
+        if (m === 'high') return 'bg-green-500 hover:bg-green-600 text-white border-none';
+        if (m === 'medium') return 'bg-yellow-500 hover:bg-yellow-600 text-white border-none';
+        if (m === 'low') return 'bg-red-500 hover:bg-red-600 text-white border-none';
+        return '';
+    };
 
     const handleCopyId = async () => {
         if (!report.interviewId) return;
@@ -43,34 +66,23 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
             setIsCopied(true);
             toast.success('ID скопирован в буфер обмена');
             setTimeout(() => setIsCopied(false), 2000);
-        } catch (err) {
-            toast.error('Не удалось скопировать ID');
-        }
+        } catch (err) { toast.error('Не удалось скопировать ID'); }
     };
 
     const handleExport = async () => {
         setIsExporting(true);
-        toast.info('Генерация PDF...', {
-            description: 'Это может занять несколько секунд...',
-        });
-        try {
-            await exportResultsPdf(report);
-        } catch (error) {
-            console.error('Ошибка генерации PDF:', error);
-            toast.error('Ошибка генерации PDF', {
-                description: (error as Error).message,
-            });
-        } finally {
-            setIsExporting(false);
-        }
-    };
 
-    const getRecommendationVariant = (rec: string) => {
-        const r = rec.toLowerCase();
-        if (r.includes('strong hire')) return 'default';
-        if (r.includes('no hire')) return 'destructive';
-        if (r.includes('consider')) return 'outline';
-        return 'secondary';
+        toast.promise(exportResultsPdf(report), {
+            loading: 'Генерация PDF...',
+            success: () => {
+                setIsExporting(false);
+                return 'PDF успешно загружен';
+            },
+            error: (err) => {
+                setIsExporting(false);
+                return `Ошибка экспорта: ${err.message}`;
+            },
+        });
     };
 
     return (
@@ -78,12 +90,9 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
             <CardHeader className="border-b bg-muted/30">
                 <div className="flex justify-between items-center">
                     <CardTitle className="text-xl">
-                        {report.cvSummary
-                            ? `Фидбек на кандидата: ${report.cvSummary.fullName}`
-                            : 'Фидбек на кандидата'}
+                        {report.cvSummary ? `Фидбек на кандидата: ${report.cvSummary.fullName}` : 'Фидбек на кандидата'}
                     </CardTitle>
                     <div className="flex items-center gap-4">
-                        {/* Кнопка Job ID для копирования */}
                         {report.interviewId && (
                             <button
                                 onClick={handleCopyId}
@@ -91,20 +100,11 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                                 title="Нажмите, чтобы скопировать ID"
                             >
                                 <span className="font-medium">Job ID</span>
-                                {isCopied ? (
-                                    <Check className="w-3 h-3 text-green-500" />
-                                ) : (
-                                    <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                )}
+                                {isCopied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />}
                             </button>
                         )}
-
                         <Button onClick={handleExport} disabled={isExporting} variant="outline" size="sm">
-                            {isExporting ? 'Экспорт...' : (
-                                <>
-                                    <Download className="w-4 h-4 mr-2" /> Скачать PDF
-                                </>
-                            )}
+                            {isExporting ? 'Экспорт...' : <><Download className="w-4 h-4 mr-2" /> Скачать PDF</>}
                         </Button>
                     </div>
                 </div>
@@ -112,25 +112,19 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
 
             <CardContent className="p-0">
                 <Accordion type="multiple" defaultValue={['item-conclusion', 'item-ai-summary']} className="w-full">
-
-                    {/* --- AI Summary --- */}
                     <AccordionItem value="item-ai-summary" className="border-b px-6">
                         <AccordionTrigger className="hover:no-underline py-4">
                             <span className="text-lg font-bold">AI Summary</span>
                         </AccordionTrigger>
                         <AccordionContent className="pb-6 pt-2 text-sm">
-                            <p className="text-muted-foreground mb-4 leading-relaxed">
-                                {report.aiSummary.overallSummary}
-                            </p>
+                            <p className="text-muted-foreground mb-4 leading-relaxed">{report.aiSummary.overallSummary}</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-2">
                                 <div className="space-y-2">
                                     <p className="font-semibold text-foreground flex items-center">
                                         <ChevronRight className="w-4 h-4 text-green-500 mr-1" /> Сильные стороны
                                     </p>
                                     <ul className="space-y-1 ml-5 text-muted-foreground list-disc">
-                                        {report.aiSummary.keyStrengths.map((item, i) => (
-                                            <li key={i}>{item}</li>
-                                        ))}
+                                        {report.aiSummary.keyStrengths.map((item, i) => <li key={i}>{item}</li>)}
                                     </ul>
                                 </div>
                                 <div className="space-y-2">
@@ -138,16 +132,13 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                                         <ChevronRight className="w-4 h-4 text-amber-500 mr-1" /> Зоны роста
                                     </p>
                                     <ul className="space-y-1 ml-5 text-muted-foreground list-disc">
-                                        {report.aiSummary.keyWeaknesses.map((item, i) => (
-                                            <li key={i}>{item}</li>
-                                        ))}
+                                        {report.aiSummary.keyWeaknesses.map((item, i) => <li key={i}>{item}</li>)}
                                     </ul>
                                 </div>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
 
-                    {/* --- 1. CV Summary --- */}
                     {report.cvSummary && (
                         <AccordionItem value="item-cv" className="border-b px-6">
                             <AccordionTrigger className="hover:no-underline py-4">
@@ -164,15 +155,12 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                         </AccordionItem>
                     )}
 
-                    {/* --- 2. Technical Assessment --- */}
                     <AccordionItem value="item-tech" className="border-b px-6">
                         <AccordionTrigger className="hover:no-underline py-4">
                             <span className="text-lg font-bold">{sectionCounter++}. Техническая оценка</span>
                         </AccordionTrigger>
                         <AccordionContent className="pb-6 pt-2 text-sm">
-                            <p className="text-muted-foreground mb-4 italic pl-2 leading-relaxed">
-                                {report.technicalAssessment.summary}
-                            </p>
+                            <p className="text-muted-foreground mb-4 italic pl-2 leading-relaxed">{report.technicalAssessment.summary}</p>
                             <div className="border rounded-lg overflow-hidden">
                                 <Table>
                                     <TableHeader className="bg-muted/50">
@@ -187,7 +175,9 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                                             <TableRow key={i}>
                                                 <TableCell className="font-medium">{item.topic}</TableCell>
                                                 <TableCell>
-                                                    <Badge variant="outline" className="font-normal">{item.grade}</Badge>
+                                                    <Badge variant="outline" className={`font-normal ${getGradeClass(item.grade)}`}>
+                                                        {item.grade}
+                                                    </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-muted-foreground">{item.summary}</TableCell>
                                             </TableRow>
@@ -198,7 +188,6 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                         </AccordionContent>
                     </AccordionItem>
 
-                    {/* --- 3. Language Assessment --- */}
                     {report.languageAssessment && (
                         <AccordionItem value="item-lang" className="border-b px-6">
                             <AccordionTrigger className="hover:no-underline py-4">
@@ -206,9 +195,7 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                             </AccordionTrigger>
                             <AccordionContent className="pb-6 pt-2 text-sm">
                                 {report.languageAssessment.assessmentSkipped ? (
-                                    <p className="text-muted-foreground pl-2 italic">
-                                        Анализ языка пропущен: {report.languageAssessment.reason || 'Нет данных'}
-                                    </p>
+                                    <p className="text-muted-foreground pl-2 italic">Анализ языка пропущен: {report.languageAssessment.reason || 'Нет данных'}</p>
                                 ) : (
                                     <div className="space-y-4 pl-2">
                                         <p className="text-muted-foreground">{report.languageAssessment.summary}</p>
@@ -231,15 +218,12 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                         </AccordionItem>
                     )}
 
-                    {/* --- 4. Values Fit --- */}
                     <AccordionItem value="item-values" className="border-b px-6">
                         <AccordionTrigger className="hover:no-underline py-4">
                             <span className="text-lg font-bold">{sectionCounter++}. Соответствие ценностям</span>
                         </AccordionTrigger>
                         <AccordionContent className="pb-6 pt-2 text-sm">
-                            <p className="text-muted-foreground mb-4 pl-2">
-                                {report.valuesFit.overallSummary}
-                            </p>
+                            <p className="text-muted-foreground mb-4 pl-2">{report.valuesFit.overallSummary}</p>
                             <div className="border rounded-lg overflow-hidden">
                                 <Table>
                                     <TableHeader className="bg-muted/50">
@@ -254,11 +238,11 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                                             <TableRow key={i}>
                                                 <TableCell className="font-medium">{item.value}</TableCell>
                                                 <TableCell className="text-center capitalize">
-                                                    <Badge variant="secondary" className="font-normal">{item.match}</Badge>
+                                                    <Badge className={`font-normal ${getMatchClass(item.match)}`}>
+                                                        {item.match}
+                                                    </Badge>
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground italic text-xs leading-relaxed">
-                                                    "{item.evidence}"
-                                                </TableCell>
+                                                <TableCell className="text-muted-foreground italic text-xs leading-relaxed">"{item.evidence}"</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -267,12 +251,11 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                         </AccordionContent>
                     </AccordionItem>
 
-                    {/* --- 5. Overall Conclusion --- */}
                     <AccordionItem value="item-conclusion" className="border-none px-6">
                         <AccordionTrigger className="hover:no-underline py-4">
                             <div className="flex items-center gap-4">
                                 <span className="text-lg font-bold">{sectionCounter++}. Финальное заключение</span>
-                                <Badge variant={getRecommendationVariant(report.overallConclusion.recommendation)}>
+                                <Badge className={getRecommendationClass(report.overallConclusion.recommendation)}>
                                     {report.overallConclusion.recommendation}
                                 </Badge>
                             </div>
@@ -281,31 +264,19 @@ export const ResultsReport = ({ report }: ResultsReportProps) => {
                             <div className="pl-2 space-y-6">
                                 <div className="p-4 bg-muted/30 rounded-lg border border-primary/10">
                                     <h4 className="font-bold mb-2">Обоснование:</h4>
-                                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                        {report.overallConclusion.finalJustification}
-                                    </p>
+                                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{report.overallConclusion.finalJustification}</p>
                                 </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-3">
-                                        <p className="font-bold text-green-600 flex items-center">
-                                            <ChevronRight className="w-4 h-4 mr-1" /> Плюсы кандидата
-                                        </p>
+                                        <p className="font-bold text-green-600 flex items-center"><ChevronRight className="w-4 h-4 mr-1" /> Плюсы кандидата</p>
                                         <ul className="space-y-2 ml-4 text-muted-foreground list-disc">
-                                            {report.overallConclusion.keyPositives.map((item, i) => (
-                                                <li key={i}>{item}</li>
-                                            ))}
+                                            {report.overallConclusion.keyPositives.map((item, i) => <li key={i}>{item}</li>)}
                                         </ul>
                                     </div>
-
                                     <div className="space-y-3">
-                                        <p className="font-bold text-destructive flex items-center">
-                                            <ChevronRight className="w-4 h-4 mr-1" /> Риски и опасения
-                                        </p>
+                                        <p className="font-bold text-destructive flex items-center"><ChevronRight className="w-4 h-4 mr-1" /> Риски и опасения</p>
                                         <ul className="space-y-2 ml-4 text-muted-foreground list-disc">
-                                            {report.overallConclusion.keyConcerns.map((item, i) => (
-                                                <li key={i}>{item}</li>
-                                            ))}
+                                            {report.overallConclusion.keyConcerns.map((item, i) => <li key={i}>{item}</li>)}
                                         </ul>
                                     </div>
                                 </div>
