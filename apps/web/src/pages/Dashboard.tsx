@@ -1,43 +1,94 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PreparationTab } from '@/features/preparation/PreparationTab';
 import { ResultsTab } from '@/features/results/ResultsTab';
 import { usePollAnalysis } from '@/api/usePollAnalysis';
+import { ResultsAnalysisResponse } from '@/types/results.types';
+import { RotateCcw } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function DashboardPage() {
-    const [jobId, setJobId] = useState<string | null>(null);
+    const queryClient = useQueryClient();
+
+    const [jobId, setJobId] = useState<string | null>(() => {
+        return localStorage.getItem('hAIring_active_job_id');
+    });
+
+    const [persistedReport, setPersistedReport] = useState<ResultsAnalysisResponse | undefined>(() => {
+        const saved = localStorage.getItem('hAIring_last_report');
+        return saved ? JSON.parse(saved) : undefined;
+    });
+
     const {
         data: jobData,
         isFetching: isPolling,
-        error: pollError // Это ошибка самого useQuery (e.g. сеть)
+        error: pollError
     } = usePollAnalysis(jobId);
 
-    // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-    const status = jobData?.status?.toLowerCase(); // 'downloading', 'processing', 'completed', etc.
+    const status = jobData?.status?.toLowerCase();
 
-    const analysisReport =
-        status === 'completed' && jobData?.result
-            ? jobData.result
-            : undefined;
+    useEffect(() => {
+        if (jobId) {
+            localStorage.setItem('hAIring_active_job_id', jobId);
+        }
+    }, [jobId]);
+
+    useEffect(() => {
+        if (status === 'completed' && jobData?.result) {
+            setPersistedReport(jobData.result);
+            localStorage.setItem('hAIring_last_report', JSON.stringify(jobData.result));
+        }
+    }, [status, jobData]);
+
+    const analysisReport = (status === 'completed' && jobData?.result)
+        ? jobData.result
+        : persistedReport;
 
     const analysisError =
         status === 'failed'
             ? new Error(jobData?.error || 'Неизвестная ошибка бэкенда')
             : pollError;
-    // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+
+    const handleReset = () => {
+        if (window.confirm('Вы уверены, что хотите очистить результаты и начать новый анализ?')) {
+            localStorage.removeItem('hAIring_active_job_id');
+            localStorage.removeItem('hAIring_last_report');
+            setJobId(null);
+            setPersistedReport(undefined);
+            queryClient.removeQueries({ queryKey: ['analysisJob'] });
+        }
+    };
 
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">Панель управления</h1>
-                <Button asChild variant="outline">
-                    <Link to="/">Выйти (на Home)</Link>
-                </Button>
+                <div className="space-y-1">
+                    <h1 className="text-3xl font-bold">Панель управления</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Управляйте подготовкой и анализом интервью в одном месте.
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    {(jobId || persistedReport) && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleReset}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Очистить всё
+                        </Button>
+                    )}
+                    <Button asChild variant="outline" size="sm">
+                        <Link to="/">Выйти</Link>
+                    </Button>
+                </div>
             </div>
 
-            <Tabs defaultValue="preparation" className="w-full">
+            <Tabs defaultValue="results" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="preparation">
                         Подготовка (CV + Фидбек)
@@ -65,7 +116,7 @@ export default function DashboardPage() {
                     <ResultsTab
                         isPolling={isPolling}
                         jobStatus={status}
-                        analysisData={analysisReport} // <-- Передаем 'result'
+                        analysisData={analysisReport}
                         analysisError={analysisError}
                         onStartAnalysis={setJobId}
                     />

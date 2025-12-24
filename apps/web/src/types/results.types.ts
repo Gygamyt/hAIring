@@ -33,6 +33,7 @@ export interface TechnicalAssessment {
 
 export interface LanguageAssessment {
     assessmentSkipped: boolean;
+    reason?: string;
     overallLevel: string;
     fluency: string;
     vocabulary: string;
@@ -53,8 +54,9 @@ export interface OverallConclusion {
     keyConcerns: string[];
 }
 
-// ЭТО НАШ НОВЫЙ "ГЛАВНЫЙ" ОТЧЕТ
 export interface FullReport {
+    interviewId?: string;
+    candidateId?: string;
     cvSummary: CvSummary;
     valuesFit: ValuesFit;
     technicalAssessment: TechnicalAssessment;
@@ -63,26 +65,33 @@ export interface FullReport {
     overallConclusion: OverallConclusion;
 }
 
-// ----- СТАРЫЕ ТИПЫ, КОТОРЫЕ УЖЕ ПРАВИЛЬНЫЕ -----
+export interface JobHistoryEntry {
+    jobName: string;
+    status: 'success' | 'failed';
+    timestamp: string;
+}
 
-// DTO-ответ, который лежит ВНУТРИ 'result' при успехе
+export interface AnalysisMetadata {
+    jobId: string;
+    jobHistory: JobHistoryEntry[];
+}
+
 export interface ResultsAnalysisResponse {
     message: string;
     success: boolean;
-    report: FullReport; // <-- Теперь использует новый FullReport
+    report: FullReport;
+    metadata?: AnalysisMetadata;
 }
 
-// DTO-ответ от API при ЗАПУСКЕ задачи
 export interface StartAnalysisResponse {
     job_id: string;
     status: string;
     message: string;
 }
 
-// DTO-ответ от API при ОПРОСЕ статуса
 export type JobStatusResponse = {
     job_id: string;
-    status: string; // "completed", "pending", "failed", etc.
-    result: ResultsAnalysisResponse | null; // <-- Отчет вложен здесь
+    status: string;
+    result: ResultsAnalysisResponse | null;
     error: string | null;
 };
