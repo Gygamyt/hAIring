@@ -6,7 +6,14 @@ import { FileExtensionValidator } from './file-extension.validator';
 export class FallbackFileValidatorPipe implements PipeTransform {
     async transform(file: Express.Multer.File): Promise<Express.Multer.File | undefined> {
         if (!file) {
-            return undefined;
+            throw new HttpException(
+                {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: 'Validation failed: CV file (cv_file) is required.',
+                    error: 'Bad Request'
+                },
+                HttpStatus.BAD_REQUEST
+            );
         }
 
         const sizeValidator = new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 });

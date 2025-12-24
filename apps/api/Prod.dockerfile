@@ -22,7 +22,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
-RUN pnpm --filter=api --prod deploy ./deploy # Копирует только нужные prod-зависимости в /deploy/node_modules
+RUN pnpm --filter=api --prod deploy ./deploy
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/
 COPY --from=builder /app/package.json ./

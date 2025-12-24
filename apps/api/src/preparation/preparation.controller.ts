@@ -42,11 +42,11 @@ export class PreparationController {
     @UseInterceptors(FileInterceptor('cv_file'))
     async analyzePreparation(
         @Body() body: AnalyzePreparationDto,
-        @UploadedFile(new FallbackFileValidatorPipe()) cvFile?: Express.Multer.File,
+        @UploadedFile(new FallbackFileValidatorPipe()) cvFile: Express.Multer.File,
     ): Promise<PreparationAnalysisResponseDto> {
         return this.preparationService.analyze(
-            cvFile?.buffer,
-            cvFile?.originalname,
+            cvFile.buffer,
+            cvFile.originalname,
             body.feedback_text,
             body.requirements_link,
         );
